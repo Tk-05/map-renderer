@@ -1,0 +1,23 @@
+# Override for docker-compose.yml: build both images from this repository
+# instead of pulling them from ghcr.io.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# Needs the Docker CLI with Compose and BuildKit on the machine itself.
+# Portainer stacks cannot build these images (BuildKit fails through
+# Portainer's connection to Docker); use the prebuilt images there.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: map-renderer:local
+    pull_policy: build
+
+  renderer:
+    build:
+      context: tools
+      dockerfile: Dockerfile
+    image: map-renderer-renderer:local
+    pull_policy: build

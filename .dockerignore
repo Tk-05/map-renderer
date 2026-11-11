@@ -7,3 +7,7 @@ tools
 map
 server/docker-compose.yml
 *.md
+.env
+.env.example
+docker-compose.yml
+docker-compose.build.yml

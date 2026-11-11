@@ -1,0 +1,49 @@
+# All-in-one: the web map together with the Realm renderer.
+# Uses the prebuilt images from ghcr.io (built by .github/workflows/build-image.yml),
+# so nothing is built on the server. Works as a Portainer stack.
+#
+# Settings come from .env (see .env.example) or, in Portainer, from the stack's
+# environment variables. At least REALM must be set.
+#
+#   docker compose pull
+#   docker compose run --rm renderer map-renderer realm login   (once: open the link, enter the code)
+#   docker compose run --rm renderer map-renderer realm list    (check the Realm name)
+#   docker compose up -d
+#   docker compose logs -f renderer                             (follow the first render)
+#
+# Build the images from this repository instead of pulling them:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# To serve a map without the renderer, use server/docker-compose.yml instead
+# (not both at once: same container names).
+
+name: map-renderer
+
+services:
+  web:
+    image: ${MAP_RENDERER_IMAGE:-ghcr.io/tk-05/map-renderer:latest}
+    container_name: map-renderer
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:80"
+    volumes:
+      # MAP_DIR: a host folder (absolute path), otherwise the "map" volume.
+      - ${MAP_DIR:-map}:/usr/share/nginx/html/map:ro
+
+  renderer:
+    image: ${MAP_RENDERER_RENDERER_IMAGE:-ghcr.io/tk-05/map-renderer-renderer:latest}
+    container_name: map-renderer-renderer
+    restart: unless-stopped
+    environment:
+      REALM: ${REALM:-}
+      REALM_SLOT: ${REALM_SLOT:-}
+      INTERVAL: ${INTERVAL:-6h}
+      BUILD_ARGS: ${BUILD_ARGS:-}
+      REALMS_CLIENT_VERSION: ${REALMS_CLIENT_VERSION:-}
+    volumes:
+      - ${MAP_DIR:-map}:/app/map
+      - cache:/app/.cache
+
+volumes:
+  map:     # used when MAP_DIR is not set
+  cache:   # uNmINeD, Microsoft sign-in tokens, downloaded world, logs

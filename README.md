@@ -20,6 +20,8 @@ serves the finished map.
 - [Tutorial 1: Render a local world and view it](#tutorial-1-render-a-local-world-and-view-it)
 - [Tutorial 2: Download a Realm world](#tutorial-2-download-a-realm-world)
 - [Tutorial 3: Run the map on a server](#tutorial-3-run-the-map-on-a-server)
+  - [Quick start: all-in-one](#quick-start-all-in-one)
+  - [Portainer](#portainer)
   - [Step 1: Get the Docker images](#step-1-get-the-docker-images)
   - [Option A: Serve a finished map from a folder](#option-a-serve-a-finished-map-from-a-folder)
   - [Option B: Download and render a Realm automatically](#option-b-download-and-render-a-realm-automatically)
@@ -187,6 +189,85 @@ The map always comes **from a path outside the image**:
 | not set              | the Docker volume `map` (filled by the renderer) |
 | `/srv/minecraft-map` | this folder on the server                        |
 
+There are two compose files. Use one of them, not both at once:
+
+| File | Renderer | Use it for |
+| --- | --- | --- |
+| `docker-compose.yml` (repo root) | always on | **web map + Realm renderer in one stack** (also in Portainer) |
+| `server/docker-compose.yml` | optional | serving a map rendered elsewhere; renderer only on demand |
+
+Both use the prebuilt images `ghcr.io/tk-05/map-renderer` and
+`ghcr.io/tk-05/map-renderer-renderer` (see [Step 1](#step-1-get-the-docker-images)).
+Nothing is built on the server.
+
+### Quick start: all-in-one
+
+Runs the web map and the Realm renderer together.
+
+**1. Get the compose file and create `.env`**
+
+```bash
+git clone https://github.com/tk-05/map-renderer.git
+cd map-renderer
+cp .env.example .env
+```
+
+Edit `.env` and set at least `REALM` (the name of your Realm). All settings are
+explained in [`.env.example`](.env.example).
+
+**2. Pull the images, sign in once, check the Realm name**
+
+```bash
+docker compose pull
+docker compose run --rm renderer map-renderer realm login
+docker compose run --rm renderer map-renderer realm list
+```
+
+Open the link, enter the code, and sign in with the Realm owner's account.
+
+**3. Start**
+
+```bash
+docker compose up -d
+docker compose logs -f renderer
+```
+
+The map is on <http://localhost:8080> (or the `PORT` from `.env`) and is updated every
+`INTERVAL`. To update the images later: `docker compose pull && docker compose up -d`.
+
+**Build from source instead** (needs the Docker CLI with BuildKit on that machine,
+not Portainer):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+> With the Docker CLI, `MAP_DIR=./map` in `.env` keeps the map in the repository's
+> `map/` folder, so the local `map-renderer` tool and the containers share it.
+
+### Portainer
+
+Portainer can't build images in a stack (the build fails with
+`error reading server preface: http2: frame too large`), so it uses the prebuilt
+images.
+
+1. **Images available?** The GitHub Action must have run at least once (push to
+   `main`, or *Actions → Build image → Run workflow*). Make both packages public under
+   *GitHub → Packages → Package settings → Change visibility*, or add `ghcr.io` under
+   *Portainer → Registries* (username + personal access token with `read:packages`).
+2. **Create the stack:** *Stacks → Add stack*
+   - **Repository:** URL `https://github.com/tk-05/map-renderer`, compose path
+     `docker-compose.yml`, or
+   - **Web editor:** paste the content of [`docker-compose.yml`](docker-compose.yml).
+3. **Environment variables** (below the editor): at least `REALM`. Optionally
+   `INTERVAL`, `PORT`, and `MAP_DIR` as an **absolute** host path (relative paths
+   point into Portainer's data folder).
+4. **Deploy the stack.**
+5. **Sign in once:** *Containers → map-renderer-renderer → Logs*. On the first run
+   the log shows the Microsoft sign-in link and code. Open the link and enter the
+   code; the render then starts on its own. Alternatively open *Console* on the
+   container (`/bin/sh`) and run `map-renderer realm login`.
+
 ### Step 1: Get the Docker images
 
 **Option 1: from GitHub (recommended).** On every push to `main`, the GitHub Action
@@ -200,7 +281,10 @@ New packages on GitHub are **private** at first. Either make them public under
 _Packages → Package settings → Change visibility_, or sign in on the server with
 `docker login ghcr.io` (username plus a personal access token with `read:packages`).
 
-**Option 2: build on the server**
+**Option 2: build on the server** (Docker CLI only, not in Portainer). For the
+all-in-one file use `docker-compose.build.yml` as shown in the
+[quick start](#quick-start-all-in-one). To build the images by hand, e.g. for
+`server/docker-compose.yml`:
 
 ```bash
 git clone https://github.com/tk-05/map-renderer.git
@@ -398,12 +482,14 @@ On Windows the command is `map-renderer.bat …`, on Linux/macOS `./map-renderer
 | `REALMS_CLIENT_VERSION` | Bedrock version reported to the Realms API (e.g. `1.26.30`), in case it asks for a newer client |
 | `NO_COLOR`              | turn off colored output                                                                         |
 
-**For `server/docker-compose.yml` (in `server/.env`)**
+**For the compose files** (in the `.env` next to the compose file: `.env` in the repo
+root for the all-in-one file, `server/.env` for `server/docker-compose.yml`)
 
 | Variable                      | Default                                      | Meaning                                                    |
 | ----------------------------- | -------------------------------------------- | ---------------------------------------------------------- |
 | `MAP_DIR`                     | volume `map`                                 | host folder with the map (absolute, or starting with `./`) |
-| `COMPOSE_PROFILES`            | –                                            | `realm` also starts the renderer                           |
+| `PORT`                        | `8080`                                       | port of the web map (all-in-one file only)                 |
+| `COMPOSE_PROFILES`            | –                                            | `realm` also starts the renderer (`server/` file only)     |
 | `REALM`                       | –                                            | Realm name or id                                           |
 | `REALM_SLOT`                  | active slot                                  | world slot 1–3                                             |
 | `INTERVAL`                    | `6h`                                         | pause between two runs (`30m`, `6h`, `1d`, …)              |
@@ -458,6 +544,9 @@ index.html                 web interface (dimensions, structures, statistics, me
 map/                       generated map (empty in the repo, git-ignored)
 map-renderer.bat / .sh     launchers for Windows / Linux / macOS
 Dockerfile                 web image (nginx, without the map)
+docker-compose.yml         all-in-one: web + renderer from the prebuilt images (Portainer-ready)
+docker-compose.build.yml   override to build both images from source instead
+.env.example               settings template for the compose files
 server/
   docker-compose.yml       web + optional renderer, MAP_DIR
   nginx.conf               nginx configuration

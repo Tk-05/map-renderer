@@ -10,3 +10,6 @@ Thumbs.db
 # The rendered map is generated (locally or by the renderer container), not versioned.
 map/*
 !map/.gitkeep
+
+# Local Docker Compose settings (copy of .env.example)
+.env
