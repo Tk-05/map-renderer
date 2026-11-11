@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Overworld</title>
+
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #111;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #frame {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+
+        /* Dimension switcher */
+        #dimensions {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 2px;
+            padding: 3px;
+            border-radius: 10px;
+            background: rgba(20, 20, 24, 0.82);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        #dimensions button {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: #d6d6dc;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        #dimensions button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        #dimensions button:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 1px;
+        }
+
+        #dimensions button[aria-pressed="true"] {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        #dimensions .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background: var(--accent);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        }
+
+        #dimensions button[aria-pressed="true"] .dot {
+            background: #fff;
+        }
+
+        [data-dim="overworld"] { --accent: #3f8a3a; }
+        [data-dim="nether"]    { --accent: #a3302a; }
+        [data-dim="end"]       { --accent: #6b4fa8; }
+        #measure-toggle        { --accent: #b7791f; }
+        #structures-toggle     { --accent: #2f6fb3; }
+        #stats-toggle          { --accent: #2f8a7e; }
+
+        /* Dimension statistics */
+        #stats {
+            top: 48px;
+            right: 58px; /* left of the tool bar */
+            width: 280px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        #stats .tabs {
+            display: flex;
+            gap: 2px;
+            margin: 6px 0 4px;
+            padding: 2px;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #stats .tabs button {
+            flex: 1;
+            padding: 4px 6px;
+            border: 0;
+            border-radius: 5px;
+            background: transparent;
+            color: #d6d6dc;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #stats .tabs button:hover { color: #fff; }
+        #stats .tabs button[aria-selected="true"] { background: var(--accent); color: #fff; }
+
+        #stats .tabs button:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 1px;
+        }
+
+        #stats h3 {
+            margin: 10px 0 2px;
+            color: #9a9aa4;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        #stats dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1px 10px;
+            margin: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #stats dt {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #9a9aa4;
+        }
+
+        #stats dd { margin: 0; text-align: right; color: #fff; }
+        #stats .type-icon { width: 16px; height: 16px; font-size: 9px; }
+
+        /* Tool bar (right edge, below uNmINeD's coordinate display) */
+        #tools {
+            position: absolute;
+            top: 48px;
+            right: 8px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 3px;
+            border-radius: 10px;
+            background: rgba(20, 20, 24, 0.82);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        #tools button {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: #d6d6dc;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        #tools button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        #tools button:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 1px;
+        }
+
+        #tools button[aria-pressed="true"] {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        #tools svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Shared look for the floating panels */
+        .panel {
+            position: absolute;
+            z-index: 10;
+            box-sizing: border-box;
+            max-width: calc(100vw - 32px);
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(20, 20, 24, 0.9);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            color: #d6d6dc;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .panel[hidden] { display: none; }
+
+        .panel h2 {
+            margin: 0 0 4px;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .panel .muted { color: #9a9aa4; font-size: 12px; }
+
+        .panel .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .panel .actions button {
+            flex: 1;
+            padding: 6px 10px;
+            border: 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: inherit;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .panel .actions button:hover { background: rgba(255, 255, 255, 0.18); }
+        .panel .actions button[hidden] { display: none; }
+
+        /* Structure legend */
+        #structures {
+            top: 48px;
+            right: 58px; /* left of the tool bar */
+            width: 220px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        #structures .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        #structures .panel-header h2 { margin: 0; }
+
+        #structures-all {
+            padding: 3px 8px;
+            border: 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        #structures-all:hover { background: rgba(255, 255, 255, 0.18); }
+
+        #structures-all:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 1px;
+        }
+
+        #structures-all[hidden] { display: none; }
+
+        #structures label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            cursor: pointer;
+        }
+
+        #structures label .count {
+            margin-left: auto;
+            color: #9a9aa4;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #structures input { margin: 0; accent-color: #2f6fb3; }
+
+        .type-icon {
+            display: inline-grid;
+            place-items: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1b1b20;
+            box-shadow: 0 0 0 2px var(--type-color, #888);
+            font-size: 11px;
+            line-height: 1;
+            flex: none;
+        }
+
+        /* Structure details */
+        #info {
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 240px;
+        }
+
+        #info h2 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #info .coords { font-variant-numeric: tabular-nums; }
+
+        /* Measurement result */
+        #measure {
+            position: absolute;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            min-width: 230px;
+            max-width: calc(100vw - 32px);
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(20, 20, 24, 0.88);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            color: #d6d6dc;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        #measure[hidden] { display: none; }
+
+        #measure .total {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #measure dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0 10px;
+            margin: 4px 0 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #measure dt { color: #9a9aa4; }
+        #measure dd { margin: 0; text-align: right; }
+
+        #measure .hint {
+            margin-top: 6px;
+            color: #9a9aa4;
+            font-size: 12px;
+        }
+
+        #measure .actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        #measure .actions button {
+            flex: 1;
+            padding: 6px 10px;
+            border: 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #measure .actions button:hover { background: rgba(255, 255, 255, 0.18); }
+        #measure .actions button[hidden] { display: none; }
+
+        @media (max-width: 480px) {
+            #dimensions {
+                top: auto;
+                bottom: 40px;
+            }
+
+            #dimensions button {
+                padding: 7px 10px;
+                font-size: 13px;
+            }
+
+            #measure {
+                top: auto;
+                bottom: 92px;
+            }
+
+            #structures {
+                width: min(220px, calc(100vw - 74px));
+                max-height: calc(100vh - 200px);
+            }
+
+            #stats {
+                width: min(280px, calc(100vw - 74px));
+                max-height: calc(100vh - 200px);
+            }
+
+            #info {
+                bottom: 92px;
+                width: calc(100vw - 32px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav id="dimensions" aria-label="Dimension">
+        <button type="button" data-dim="overworld" title="Overworld (key 1)"><span class="dot"></span>Overworld</button>
+        <button type="button" data-dim="nether" title="Nether (key 2)"><span class="dot"></span>Nether</button>
+        <button type="button" data-dim="end" title="The End (key 3)"><span class="dot"></span>The End</button>
+    </nav>
+
+    <div id="tools" role="toolbar" aria-label="Tools" aria-orientation="vertical">
+        <button type="button" id="structures-toggle" aria-pressed="false" aria-controls="structures"
+            aria-label="Structures" title="Structures (key S)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M8 14.5s-4.5-4.2-4.5-7.6a4.5 4.5 0 0 1 9 0c0 3.4-4.5 7.6-4.5 7.6z" />
+                <circle cx="8" cy="6.8" r="1.6" />
+            </svg>
+        </button>
+        <button type="button" id="stats-toggle" aria-pressed="false" aria-controls="stats"
+            aria-label="Statistics" title="Statistics (key I)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M2 14.5h12" />
+                <path d="M4 12V8M8 12V3.5M12 12V6" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </button>
+        <button type="button" id="measure-toggle" aria-pressed="false"
+            aria-label="Measure distance" title="Measure distance (key M)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M1.5 11.5l10-10 3 3-10 10z" />
+                <path d="M4.5 8.5l1.5 1.5M6.5 6.5l1 1M8.5 4.5l1.5 1.5" />
+            </svg>
+        </button>
+    </div>
+
+    <section id="structures" class="panel" aria-label="Structures" hidden>
+        <div class="panel-header">
+            <h2>Structures</h2>
+            <button type="button" id="structures-all" hidden></button>
+        </div>
+        <div id="structures-list"></div>
+        <div class="muted" id="structures-meta" hidden></div>
+    </section>
+
+    <section id="stats" class="panel" aria-label="Statistics" hidden>
+        <h2>Statistics</h2>
+        <div class="tabs" role="tablist" aria-label="Dimension">
+            <button type="button" role="tab" data-stats-dim="overworld" style="--accent: #3f8a3a">Overworld</button>
+            <button type="button" role="tab" data-stats-dim="nether" style="--accent: #a3302a">Nether</button>
+            <button type="button" role="tab" data-stats-dim="end" style="--accent: #6b4fa8">The End</button>
+        </div>
+        <div id="stats-body" role="tabpanel"></div>
+    </section>
+
+    <section id="info" class="panel" aria-live="polite" hidden>
+        <h2><span class="type-icon" id="info-icon"></span><span id="info-title"></span></h2>
+        <div class="coords" id="info-coords"></div>
+        <div id="info-details"></div>
+        <div class="actions">
+            <button type="button" id="info-go"></button>
+            <button type="button" id="info-tp">Copy /tp</button>
+            <button type="button" id="info-close">Close</button>
+        </div>
+    </section>
+
+    <section id="measure" aria-live="polite" hidden>
+        <div class="total" id="measure-total">0 blocks</div>
+        <dl id="measure-details"></dl>
+        <div class="hint" id="measure-hint"></div>
+        <div class="actions">
+            <button type="button" id="measure-finish">Finish</button>
+            <button type="button" id="measure-clear">Clear</button>
+        </div>
+    </section>
+
+    <iframe id="frame" title="Map"></iframe>
+
+    <script>
+        // Each dimension is a separate uNmINeD export in its own folder under map/.
+        // `scale` is blocks-per-block relative to the Overworld (Nether is 1:8).
+        const DIMENSIONS = {
+            overworld: { label: 'Overworld', path: 'map/overworld/index.html', scale: 1 },
+            nether:    { label: 'Nether',    path: 'map/nether/index.html',    scale: 8 },
+            end:       { label: 'The End',   path: 'map/end/index.html',       scale: null } // no coordinate link
+        };
+        const DEFAULT_DIM = 'overworld';
+
+        // Zoom, in screen pixels per block. uNmINeD stops at 1 device pixel per
+        // block (tiny on scaled/HiDPI displays); beyond zoom.0 the tiles are
+        // upscaled without smoothing, so blocks stay crisp.
+        const ZOOM = {
+            maxPixelsPerBlock: 16,   // closest zoom (power of two)
+            defaultPixelsPerBlock: 2 // initial zoom on first load
+        };
+
+        const frame = document.getElementById('frame');
+        const buttons = document.querySelectorAll('#dimensions button[data-dim]');
+        let current = null;
+        let pendingView = null;
+
+        // Access the uNmINeD instance inside the iframe. Works when served over
+        // http(s); when opened via file:// browsers may block it, in which case
+        // switching still works but the map position is not carried over.
+        function getUnmined() {
+            try {
+                return frame.contentWindow.eval('typeof unmined !== "undefined" ? unmined : null');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // View-projection units per block. Each export has its own projection,
+        // so zoom is exchanged between dimensions as pixels per block.
+        function blockUnit(u, ol) {
+            return ol.proj.transform([1, 1], u.dataProjection, u.viewProjection)[0];
+        }
+
+        // Replace uNmINeD's view with one that ignores devicePixelRatio and
+        // allows zooming past 1:1.
+        function upgradeZoom() {
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol || u.mapRendererZoomUpgraded) return;
+            try {
+                const map = u.olMap;
+                const tileLayer = map.getLayers().item(0);
+                const oldView = map.getView();
+                const unit = blockUnit(u, ol);
+                const minZoom = frame.contentWindow.UnminedMapProperties.minZoom;
+                const maxZoom = Math.log2(ZOOM.maxPixelsPerBlock);
+
+                const resolutions = [];
+                for (let z = minZoom; z <= maxZoom; z++) {
+                    resolutions.push(unit / Math.pow(2, z));
+                }
+
+                map.setView(new ol.View({
+                    center: oldView.getCenter(),
+                    extent: tileLayer.getSource().getTileGrid().getExtent(),
+                    projection: oldView.getProjection(),
+                    resolutions: resolutions,
+                    resolution: unit / ZOOM.defaultPixelsPerBlock,
+                    constrainResolution: true,
+                    showFullExtent: true,
+                    constrainOnlyCenter: true,
+                    enableRotation: false
+                }));
+
+                // OpenLayers sets smoothing right before this event; turn it off
+                // so upscaled tiles render as sharp pixels.
+                tileLayer.on('prerender', e => { e.context.imageSmoothingEnabled = false; });
+
+                u.mapRendererZoomUpgraded = true;
+            } catch (e) {
+                console.warn('Zoom upgrade failed', e);
+            }
+        }
+
+        // Last view per dimension for this browser session: switching back
+        // returns to where you were, also after a reload of the tab.
+        const VIEWS_KEY = 'map-renderer.views';
+        let savedViews = {};
+        try { savedViews = JSON.parse(sessionStorage.getItem(VIEWS_KEY)) || {}; } catch (e) { /* ignore */ }
+
+        function rememberView(dim, v) {
+            if (!DIMENSIONS[dim] || !v || !isFinite(v.x) || !isFinite(v.z) || !(v.ppb > 0)) return;
+            savedViews[dim] = { x: Math.round(v.x), z: Math.round(v.z), ppb: v.ppb };
+            try { sessionStorage.setItem(VIEWS_KEY, JSON.stringify(savedViews)); } catch (e) { /* ignore */ }
+        }
+
+        // Defaults read the map currently in the iframe; pass u/ol to read a specific one.
+        function readView(u = getUnmined(), ol = frame.contentWindow && frame.contentWindow.ol) {
+            if (!u || !u.olMap || !ol) return null;
+            try {
+                const view = u.olMap.getView();
+                const block = ol.proj.transform(view.getCenter(), u.viewProjection, u.dataProjection);
+                return { x: block[0], z: block[1], ppb: blockUnit(u, ol) / view.getResolution() };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function applyView(v) {
+            const u = getUnmined();
+            if (!u || !u.olMap || !v) return;
+            try {
+                const ol = frame.contentWindow.ol;
+                u.center([v.x, v.z]);
+                if (v.ppb) u.olMap.getView().setResolution(blockUnit(u, ol) / v.ppb);
+            } catch (e) { /* ignore */ }
+        }
+
+        // `view` overrides the carried-over position (used to jump to a structure).
+        function select(dim, { pushHistory = true, view = null } = {}) {
+            if (!DIMENSIONS[dim]) dim = DEFAULT_DIM;
+            if (dim === current) return;
+
+            // Where to open the new dimension, in this order:
+            // explicit jump > last position there this session > position
+            // converted from the current map (Overworld <-> Nether is 1:8).
+            pendingView = null;
+            const from = current && DIMENSIONS[current];
+            const to = DIMENSIONS[dim];
+            const v = current ? readView() : null;
+            if (v) rememberView(current, v);
+
+            if (view) {
+                pendingView = { ppb: v && v.ppb, ...view };
+            } else if (savedViews[dim]) {
+                pendingView = { ...savedViews[dim] };
+            } else if (v && from.scale && to.scale) {
+                const f = from.scale / to.scale;
+                pendingView = { x: v.x * f, z: v.z * f, ppb: v.ppb };
+            } else if (v) {
+                pendingView = { x: 0, z: 0, ppb: v.ppb };
+            }
+
+            current = dim;
+            measureReset(); // the measurement belongs to the map being unloaded
+            structuresReset();
+            frame.src = to.path;
+            buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dim === dim)));
+            document.title = to.label; // the tab shows only the dimension
+
+            if (pushHistory) {
+                history.replaceState(null, '', '#' + dim);
+            }
+        }
+
+        // ---- Distance measurement ----------------------------------------
+        // Runs inside the uNmINeD map via its own OpenLayers instance: a vector
+        // layer for the line plus a Draw interaction. Lengths are computed in
+        // block coordinates (x/z), so they match in-game distances.
+
+        const SPRINT_BLOCKS_PER_SECOND = 5.612;
+
+        const measureToggle = document.getElementById('measure-toggle');
+        const measurePanel = document.getElementById('measure');
+        const measureTotal = document.getElementById('measure-total');
+        const measureDetails = document.getElementById('measure-details');
+        const measureHint = document.getElementById('measure-hint');
+        const measureFinish = document.getElementById('measure-finish');
+        const measureClear = document.getElementById('measure-clear');
+
+        let measureActive = false;
+        let measureDrawing = false;
+        let measureCtx = null; // { ol, u, source, layer, draw } for the loaded map
+
+        const fmtBlocks = n => Math.round(n).toLocaleString() + (Math.round(n) === 1 ? ' block' : ' blocks');
+
+        function fmtDuration(seconds) {
+            const s = Math.round(seconds);
+            if (s < 60) return s + ' s';
+            const pad = n => String(n).padStart(2, '0');
+            if (s < 3600) return Math.floor(s / 60) + ':' + pad(s % 60) + ' min';
+            return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ' h';
+        }
+
+        function toBlocks(ctx, coords) {
+            return coords.map(c => ctx.ol.proj.transform(c, ctx.u.viewProjection, ctx.u.dataProjection));
+        }
+
+        function pathLength(pts) {
+            let total = 0;
+            for (let i = 1; i < pts.length; i++) {
+                total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+            }
+            return total;
+        }
+
+        function measureStyle(ctx) {
+            const ol = ctx.ol;
+            const outline = new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.6)', width: 5 })
+            });
+            const line = new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: '#ffd166', width: 2.5, lineDash: [8, 6] })
+            });
+            const dot = new ol.style.Circle({
+                radius: 4,
+                fill: new ol.style.Fill({ color: '#ffd166' }),
+                stroke: new ol.style.Stroke({ color: '#000', width: 1.5 })
+            });
+            const cursor = new ol.style.Style({ image: dot });
+
+            return feature => {
+                const geom = feature.getGeometry();
+                const type = geom.getType();
+                if (type === 'Point') return cursor;
+                if (type !== 'LineString') return null;
+
+                const coords = geom.getCoordinates();
+                const length = pathLength(toBlocks(ctx, coords));
+                return [
+                    outline,
+                    line,
+                    new ol.style.Style({ geometry: new ol.geom.MultiPoint(coords), image: dot }),
+                    new ol.style.Style({
+                        geometry: new ol.geom.Point(coords[coords.length - 1]),
+                        text: new ol.style.Text({
+                            text: fmtBlocks(length),
+                            font: 'bold 13px -apple-system, "Segoe UI", Roboto, sans-serif',
+                            fill: new ol.style.Fill({ color: '#fff' }),
+                            stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.85)', width: 3 }),
+                            offsetY: -16
+                        })
+                    })
+                ];
+            };
+        }
+
+        function renderMeasure(pts) {
+            measurePanel.hidden = !measureActive;
+            if (!measureActive) return;
+
+            const hasLine = !!(pts && pts.length >= 2);
+            measureDetails.replaceChildren();
+
+            if (hasLine) {
+                const total = pathLength(pts);
+                const first = pts[0];
+                const last = pts[pts.length - 1];
+                const dx = last[0] - first[0];
+                const dz = last[1] - first[1];
+                const rows = [];
+
+                if (pts.length > 2) {
+                    rows.push(['Straight line', fmtBlocks(Math.hypot(dx, dz))]);
+                    rows.push(['Segments', String(pts.length - 1)]);
+                }
+                rows.push(['Δx', Math.abs(Math.round(dx)).toLocaleString() + (dx < 0 ? ' W' : ' E')]);
+                rows.push(['Δz', Math.abs(Math.round(dz)).toLocaleString() + (dz < 0 ? ' N' : ' S')]);
+
+                const scale = DIMENSIONS[current].scale;
+                if (scale === 1) rows.push(['Via Nether', fmtBlocks(total / 8)]);
+                if (scale === 8) rows.push(['In Overworld', fmtBlocks(total * 8)]);
+                rows.push(['Sprinting', fmtDuration(total / SPRINT_BLOCKS_PER_SECOND)]);
+
+                for (const [label, value] of rows) {
+                    const dt = document.createElement('dt');
+                    const dd = document.createElement('dd');
+                    dt.textContent = label;
+                    dd.textContent = value;
+                    measureDetails.append(dt, dd);
+                }
+                measureTotal.textContent = fmtBlocks(total);
+            } else {
+                measureTotal.textContent = fmtBlocks(0);
+            }
+
+            if (!measureCtx) {
+                measureHint.textContent = 'Waiting for the map…';
+            } else if (measureDrawing) {
+                measureHint.textContent = 'Click to add points · double-click to finish · Backspace removes the last point · Esc cancels';
+            } else {
+                measureHint.textContent = hasLine ? 'Click on the map to start a new measurement' : 'Click on the map to start measuring';
+            }
+            measureFinish.hidden = !measureDrawing;
+            measureClear.hidden = !hasLine;
+        }
+
+        function measureAttach() {
+            if (!measureActive || measureCtx) return;
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+
+            try {
+                const ctx = { ol, u };
+                const style = measureStyle(ctx);
+                ctx.source = new ol.source.Vector();
+                ctx.layer = new ol.layer.Vector({ source: ctx.source, style, zIndex: 2000 });
+                ctx.draw = new ol.interaction.Draw({
+                    source: ctx.source,
+                    type: 'LineString',
+                    style,
+                    stopClick: true
+                });
+
+                ctx.draw.on('drawstart', e => {
+                    ctx.source.clear();
+                    measureDrawing = true;
+                    const geom = e.feature.getGeometry();
+                    geom.on('change', () => renderMeasure(toBlocks(ctx, geom.getCoordinates())));
+                });
+                ctx.draw.on('drawend', e => {
+                    measureDrawing = false;
+                    renderMeasure(toBlocks(ctx, e.feature.getGeometry().getCoordinates()));
+                });
+                ctx.draw.on('drawabort', () => {
+                    measureDrawing = false;
+                    renderMeasure(null);
+                });
+
+                u.olMap.addLayer(ctx.layer);
+                u.olMap.addInteraction(ctx.draw);
+                u.olMap.getTargetElement().style.cursor = 'crosshair';
+                measureCtx = ctx;
+            } catch (e) {
+                console.warn('Measuring unavailable', e);
+            }
+        }
+
+        function measureDetach() {
+            if (measureCtx) {
+                try {
+                    const { u, layer, draw } = measureCtx;
+                    u.olMap.removeInteraction(draw);
+                    u.olMap.removeLayer(layer);
+                    u.olMap.getTargetElement().style.cursor = '';
+                } catch (e) { /* map already gone */ }
+            }
+            measureCtx = null;
+            measureDrawing = false;
+        }
+
+        // Called when the map in the iframe is replaced.
+        function measureReset() {
+            measureCtx = null;
+            measureDrawing = false;
+            renderMeasure(null);
+        }
+
+        function setMeasure(on) {
+            measureActive = on;
+            if (on) hideInfo();
+            measureToggle.setAttribute('aria-pressed', String(on));
+            if (on) measureAttach(); else measureDetach();
+            renderMeasure(null);
+        }
+
+        measureToggle.addEventListener('click', () => setMeasure(!measureActive));
+        measureFinish.addEventListener('click', () => measureCtx && measureCtx.draw.finishDrawing());
+        measureClear.addEventListener('click', () => {
+            if (!measureCtx) return;
+            measureCtx.draw.abortDrawing();
+            measureCtx.source.clear();
+            measureDrawing = false;
+            renderMeasure(null);
+        });
+
+        // ---- Structures ------------------------------------------------
+        // map/structures.json is written by tools/build_map.py (block scan of
+        // the world). Shown as an extra vector layer inside the uNmINeD map.
+
+        const STRUCTURE_TYPES = {
+            nether_portal:  { icon: '🌀', color: '#9b59b6' },
+            stronghold:     { icon: '👁️', color: '#16a085' },
+            village:        { icon: '🔔', color: '#d4a017' },
+            trial_chamber:  { icon: '🗝️', color: '#c2703d' },
+            ancient_city:   { icon: '💀', color: '#3a86c8' },
+            ocean_monument: { icon: '🔱', color: '#1fa2b5' },
+            spawner:        { icon: '🔥', color: '#e67e22' },
+            desert_pyramid: { icon: '🏜️', color: '#d9a441' },
+            jungle_temple:  { icon: '🌴', color: '#3f9b3f' },
+            swamp_hut:      { icon: '🧙', color: '#5b7f3a' },
+            igloo:          { icon: '🧊', color: '#8fc9e0' },
+            woodland_mansion: { icon: '🏚️', color: '#7a5230' },
+            ruined_portal:  { icon: '🧱', color: '#7d3c98' },
+            trail_ruins:    { icon: '🏺', color: '#b5651d' },
+            ocean_ruins:    { icon: '🐚', color: '#2e86ab' },
+            mineshaft:      { icon: '⛏️', color: '#8d6e63' },
+            amethyst_geode: { icon: '💎', color: '#9b59b6' },
+            fortress:       { icon: '🏰', color: '#b03a2e' },
+            bastion:        { icon: '🪙', color: '#b8860b' },
+            nether_fossil:  { icon: '🦴', color: '#cfc6ad' },
+            end_gateway:    { icon: '✨', color: '#8e7cc3' },
+            end_city:       { icon: '🏙️', color: '#c39bd3' },
+            end_ship:       { icon: '🚢', color: '#a569bd' },
+            exit_portal:    { icon: '🐉', color: '#6c3483' }
+        };
+        const DEFAULT_TYPE = { icon: '•', color: '#888888' };
+        const LABEL_MIN_PIXELS_PER_BLOCK = 1; // show names from this zoom on
+        const HIDDEN_KEY = 'map-renderer.hidden-structures';
+
+        const structuresToggle = document.getElementById('structures-toggle');
+        const structuresPanel = document.getElementById('structures');
+        const structuresList = document.getElementById('structures-list');
+        const structuresMeta = document.getElementById('structures-meta');
+        const infoPanel = document.getElementById('info');
+
+        let structureDoc = null;  // parsed structures.json, or { structures: [] }
+        let structCtx = null;     // { ol, u, source, layer } for the loaded map
+        let selectedId = null;
+        let pendingSelectId = null;
+
+        let hiddenTypes = new Set();
+        try { hiddenTypes = new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY)) || []); } catch (e) { /* ignore */ }
+
+        const structuresLoaded = fetch('map/structures.json', { cache: 'no-cache' })
+            .then(r => (r.ok ? r.json() : { structures: [] }))
+            .catch(() => ({ structures: [] }))
+            .then(doc => { structureDoc = doc; });
+
+        const typeInfo = type => STRUCTURE_TYPES[type] || DEFAULT_TYPE;
+        const structuresIn = dim => (structureDoc ? structureDoc.structures.filter(s => s.dim === dim) : []);
+        const findStructure = id => structureDoc && structureDoc.structures.find(s => s.id === id);
+
+        function structureStyle(ctx) {
+            const ol = ctx.ol;
+            const cache = {};
+            const unit = blockUnit(ctx.u, ol);
+
+            function icon(type, selected) {
+                const key = type + (selected ? ':sel' : '');
+                if (!cache[key]) {
+                    const t = typeInfo(type);
+                    cache[key] = new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: selected ? 13 : 10,
+                            fill: new ol.style.Fill({ color: 'rgba(20, 20, 24, 0.85)' }),
+                            stroke: new ol.style.Stroke({ color: selected ? '#fff' : t.color, width: selected ? 3 : 2 })
+                        }),
+                        text: new ol.style.Text({
+                            text: t.icon,
+                            font: (selected ? 14 : 11) + 'px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif',
+                            fill: new ol.style.Fill({ color: '#fff' })
+                        }),
+                        zIndex: selected ? 2 : 1
+                    });
+                }
+                return cache[key];
+            }
+
+            return (feature, resolution) => {
+                const s = feature.get('structure');
+                if (hiddenTypes.has(s.type) && s.id !== selectedId) return null;
+                const styles = [icon(s.type, s.id === selectedId)];
+                if (unit / resolution >= LABEL_MIN_PIXELS_PER_BLOCK || s.id === selectedId) {
+                    styles.push(new ol.style.Style({
+                        text: new ol.style.Text({
+                            text: s.label,
+                            font: '600 12px -apple-system, "Segoe UI", Roboto, sans-serif',
+                            fill: new ol.style.Fill({ color: '#fff' }),
+                            stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.85)', width: 3 }),
+                            offsetY: 22
+                        }),
+                        zIndex: 3
+                    }));
+                }
+                return styles;
+            };
+        }
+
+        function attachStructures() {
+            if (structCtx || !structureDoc) return;
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+
+            try {
+                const ctx = { ol, u };
+                ctx.source = new ol.source.Vector({
+                    features: structuresIn(current).map(s => {
+                        const f = new ol.Feature({
+                            geometry: new ol.geom.Point(ol.proj.transform([s.x + 0.5, s.z + 0.5], u.dataProjection, u.viewProjection))
+                        });
+                        f.set('structure', s);
+                        return f;
+                    })
+                });
+                ctx.layer = new ol.layer.Vector({ source: ctx.source, style: structureStyle(ctx), zIndex: 1500 });
+                u.olMap.addLayer(ctx.layer);
+
+                const hit = pixel => u.olMap.forEachFeatureAtPixel(pixel, f => f.get('structure'),
+                    { layerFilter: l => l === ctx.layer, hitTolerance: 4 });
+
+                u.olMap.on('singleclick', e => {
+                    if (measureActive) return;
+                    const s = hit(e.pixel);
+                    if (s) showInfo(s); else hideInfo();
+                });
+                u.olMap.on('pointermove', e => {
+                    if (measureActive || e.dragging) return;
+                    u.olMap.getTargetElement().style.cursor = hit(e.pixel) ? 'pointer' : '';
+                });
+
+                structCtx = ctx;
+            } catch (e) {
+                console.warn('Structures unavailable', e);
+            }
+
+            renderLegend();
+            if (pendingSelectId) {
+                const s = findStructure(pendingSelectId);
+                pendingSelectId = null;
+                if (s) showInfo(s);
+            }
+        }
+
+        function structuresReset() {
+            structCtx = null;
+            selectedId = null;
+            infoPanel.hidden = true;
+        }
+
+        function refreshStructures() {
+            if (structCtx) structCtx.layer.changed();
+        }
+
+        function saveHiddenTypes() {
+            try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hiddenTypes])); } catch (e) { /* ignore */ }
+        }
+
+        // "Show all" / "Hide all" for the types of the current dimension.
+        function updateAllButton(types) {
+            const allButton = document.getElementById('structures-all');
+            const allVisible = types.every(t => !hiddenTypes.has(t));
+            allButton.hidden = types.length === 0;
+            allButton.textContent = allVisible ? 'Hide all' : 'Show all';
+            allButton.title = allVisible ? 'Hide all structure types' : 'Show all structure types';
+            allButton.onclick = () => {
+                for (const t of types) {
+                    if (allVisible) hiddenTypes.add(t); else hiddenTypes.delete(t);
+                }
+                saveHiddenTypes();
+                refreshStructures();
+                renderLegend();
+            };
+        }
+
+        function renderLegend() {
+            const counts = {};
+            for (const s of structuresIn(current)) counts[s.type] = (counts[s.type] || 0) + 1;
+            const labels = {};
+            for (const s of structuresIn(current)) labels[s.type] = s.label;
+
+            structuresList.replaceChildren();
+            const types = Object.keys(counts).sort((a, b) => labels[a].localeCompare(labels[b]));
+            updateAllButton(types);
+            for (const type of types) {
+                const row = document.createElement('label');
+                const box = document.createElement('input');
+                box.type = 'checkbox';
+                box.checked = !hiddenTypes.has(type);
+                box.addEventListener('change', () => {
+                    if (box.checked) hiddenTypes.delete(type); else hiddenTypes.add(type);
+                    saveHiddenTypes();
+                    refreshStructures();
+                    updateAllButton(types);
+                });
+                const iconEl = document.createElement('span');
+                iconEl.className = 'type-icon';
+                iconEl.style.setProperty('--type-color', typeInfo(type).color);
+                iconEl.textContent = typeInfo(type).icon;
+                const name = document.createElement('span');
+                name.textContent = labels[type];
+                const count = document.createElement('span');
+                count.className = 'count';
+                count.textContent = counts[type].toLocaleString();
+                row.append(box, iconEl, name, count);
+                structuresList.append(row);
+            }
+
+            // Only shown when there is nothing to list.
+            structuresMeta.hidden = types.length > 0;
+            structuresMeta.textContent = structureDoc && structureDoc.generated
+                ? 'Nothing found in this dimension.'
+                : 'No scan yet. Run: map-renderer scan';
+        }
+
+        function setStructuresPanel(open) {
+            structuresPanel.hidden = !open;
+            structuresToggle.setAttribute('aria-pressed', String(open));
+            if (open) {
+                setStatsPanel(false); // both panels use the same spot
+                renderLegend();
+            }
+        }
+
+        function dimLabel(dim) {
+            return DIMENSIONS[dim] ? DIMENSIONS[dim].label : dim;
+        }
+
+        function showInfo(s) {
+            selectedId = s.id;
+            refreshStructures();
+
+            const t = typeInfo(s.type);
+            const iconEl = document.getElementById('info-icon');
+            iconEl.textContent = t.icon;
+            iconEl.style.setProperty('--type-color', t.color);
+            document.getElementById('info-title').textContent = s.label;
+            document.getElementById('info-coords').textContent =
+                'X ' + s.x.toLocaleString() + ' · Y ' + s.y.toLocaleString() + ' · Z ' + s.z.toLocaleString();
+
+            const details = document.getElementById('info-details');
+            const lines = [];
+            const go = document.getElementById('info-go');
+            go.hidden = true;
+            go.onclick = null;
+
+            if (s.type === 'stronghold' && s.eyes !== undefined) {
+                lines.push('End portal: ' + s.eyes + '/12 eyes' + (s.eyes >= 12 ? ' (active)' : ''));
+            }
+            if (s.target) {
+                const linked = s.link && findStructure(s.link);
+                lines.push('Exits in the ' + dimLabel(s.target.dim) + ' near ' + s.target.x + ', ' + s.target.z);
+                if (linked) {
+                    lines.push('Linked portal: ' + linked.x + ', ' + linked.y + ', ' + linked.z);
+                    go.textContent = 'Go to linked portal';
+                    go.onclick = () => goTo(linked.dim, linked.x, linked.z, linked.id);
+                } else {
+                    lines.push('No portal there yet, the game will build one.');
+                    go.textContent = 'Show exit point';
+                    go.onclick = () => goTo(s.target.dim, s.target.x, s.target.z, null);
+                }
+                go.hidden = false;
+            }
+            details.replaceChildren(...lines.map(text => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div;
+            }));
+
+            document.getElementById('info-tp').onclick = () => {
+                const cmd = '/tp @s ' + s.x + ' ' + s.y + ' ' + s.z;
+                if (navigator.clipboard) navigator.clipboard.writeText(cmd).catch(() => {});
+            };
+
+            infoPanel.hidden = false;
+        }
+
+        function hideInfo() {
+            infoPanel.hidden = true;
+            if (selectedId) {
+                selectedId = null;
+                refreshStructures();
+            }
+        }
+
+        function goTo(dim, x, z, id) {
+            if (dim === current) {
+                const u = getUnmined();
+                if (u) u.center([x, z]);
+                const s = id && findStructure(id);
+                if (s) showInfo(s); else hideInfo();
+                return;
+            }
+            pendingSelectId = id;
+            select(dim, { view: { x, z } });
+        }
+
+        // ---- Statistics ----------------------------------------------
+        // map/stats.json is written by map-renderer from uNmINeD's render log.
+        // Without it, region count and extent of the open dimension are read
+        // from the uNmINeD export itself.
+
+        const statsToggle = document.getElementById('stats-toggle');
+        const statsPanel = document.getElementById('stats');
+        const statsBody = document.getElementById('stats-body');
+        const statsTabs = statsPanel.querySelectorAll('[data-stats-dim]');
+
+        let statsDoc = null;
+        let statsDim = null; // dimension shown in the panel
+        const statsLoaded = fetch('map/stats.json', { cache: 'no-cache' })
+            .then(r => (r.ok ? r.json() : null))
+            .catch(() => null)
+            .then(doc => { statsDoc = doc; renderStats(); });
+
+        const BLOCKS_PER_REGION = 512 * 512;
+        const BLOCKS_PER_CHUNK = 16 * 16;
+        const fmtInt = n => Math.round(n).toLocaleString();
+        const fmtArea = blocks => (blocks / 1e6).toLocaleString(undefined, { maximumFractionDigits: blocks < 1e7 ? 2 : 0 }) + ' km²';
+
+        function fmtBytes(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0;
+            while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
+            return bytes.toLocaleString(undefined, { maximumFractionDigits: i >= 2 ? 1 : 0 }) + ' ' + units[i];
+        }
+
+        // Region count and extent straight from the export loaded in the iframe.
+        function liveDimStats() {
+            try {
+                const w = frame.contentWindow;
+                const p = w.UnminedMapProperties;
+                let regions = 0;
+                for (const group of w.UnminedRegions) {
+                    for (let i = 0; i < 32; i++) {
+                        let bits = group.m[i] >>> 0;
+                        while (bits) { bits &= bits - 1; regions++; }
+                    }
+                }
+                return {
+                    regions,
+                    bounds: [p.minRegionX * 512, p.minRegionZ * 512, (p.maxRegionX + 1) * 512 - 1, (p.maxRegionZ + 1) * 512 - 1],
+                    live: true
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function statsSection(title, rows) {
+            rows = rows.filter(r => r && r[1] !== null && r[1] !== undefined && r[1] !== '');
+            if (!rows.length) return [];
+            const h = document.createElement('h3');
+            h.textContent = title;
+            const dl = document.createElement('dl');
+            for (const [label, value] of rows) {
+                const dt = document.createElement('dt');
+                if (label instanceof Node) dt.append(label); else dt.textContent = label;
+                const dd = document.createElement('dd');
+                dd.textContent = value;
+                dl.append(dt, dd);
+            }
+            return [h, dl];
+        }
+
+        function structureRows(dim) {
+            const counts = {};
+            const labels = {};
+            for (const s of structuresIn(dim)) {
+                counts[s.type] = (counts[s.type] || 0) + 1;
+                labels[s.type] = s.label;
+            }
+            return Object.keys(counts)
+                .sort((a, b) => counts[b] - counts[a])
+                .map(type => {
+                    const label = document.createElement('span');
+                    const icon = document.createElement('span');
+                    icon.className = 'type-icon';
+                    icon.style.setProperty('--type-color', typeInfo(type).color);
+                    icon.textContent = typeInfo(type).icon;
+                    label.style.display = 'contents';
+                    label.append(icon, document.createTextNode(labels[type]));
+                    return [label, fmtInt(counts[type])];
+                });
+        }
+
+        function renderStats() {
+            if (statsPanel.hidden) return;
+            const dim = statsDim || current;
+            statsTabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.statsDim === dim)));
+
+            const saved = statsDoc && statsDoc.dimensions && statsDoc.dimensions[dim];
+            const s = saved || (dim === current ? liveDimStats() : null);
+            const parts = [];
+
+            if (s) {
+                const b = s.bounds;
+                parts.push(...statsSection('Explored', [
+                    ['Regions', s.regions !== undefined ? fmtInt(s.regions) + ' · ' + fmtArea(s.regions * BLOCKS_PER_REGION) : null],
+                    ['Chunks', s.chunks !== undefined ? fmtInt(s.chunks) + ' · ' + fmtArea(s.chunks * BLOCKS_PER_CHUNK) : null],
+                    ['X', b ? fmtInt(b[0]) + ' … ' + fmtInt(b[2]) : null],
+                    ['Z', b ? fmtInt(b[1]) + ' … ' + fmtInt(b[3]) : null],
+                    ['Size', s.size ? fmtInt(s.size[0]) + ' × ' + fmtInt(s.size[1]) + ' blocks' : null]
+                ]));
+            }
+
+            parts.push(...statsSection('Structures', structureRows(dim)));
+
+            if (saved) {
+                const run = saved.lastRun || {};
+                parts.push(...statsSection('Map', [
+                    ['Rendered', saved.rendered ? new Date(saved.rendered).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : null],
+                    ['Terrain tiles', saved.terrainTiles !== undefined ? fmtInt(saved.terrainTiles) : null],
+                    ['Zoom-out tiles', saved.zoomOutTiles !== undefined ? fmtInt(saved.zoomOutTiles) : null],
+                    ['On disk', saved.disk ? fmtBytes(saved.disk.bytes) + ' · ' + fmtInt(saved.disk.files) + ' files' : null],
+                    ['Last render', run.seconds != null ? fmtDuration(run.seconds) + (run.full ? ' (full)' : '') : null],
+                    ['Tiles updated', run.tilesRendered !== undefined ? fmtInt(run.tilesRendered) : null],
+                    ['Chunks updated', run.chunksRendered !== undefined ? fmtInt(run.chunksRendered) : null],
+                    ['Speed', run.chunksPerSecond ? fmtInt(run.chunksPerSecond) + ' chunks/s' : null],
+                    ['Failed chunks', run.chunksFailed ? fmtInt(run.chunksFailed) : null]
+                ]));
+            }
+
+            const world = statsDoc && statsDoc.world;
+            if (world) {
+                parts.push(...statsSection('World', [
+                    ['Name', world.name],
+                    ['Edition', world.edition ? world.edition + (world.version ? ' ' + world.version : '') : null],
+                    ['Known players', world.players !== undefined ? fmtInt(world.players) : null]
+                ]));
+            }
+
+            if (!s || s.live || (s && s.chunks === undefined)) {
+                const note = document.createElement('p');
+                note.className = 'muted';
+                note.style.margin = '10px 0 0';
+                note.textContent = !s
+                    ? 'No statistics for this dimension yet. Run: map-renderer render'
+                    : s.live
+                        ? 'Basic numbers from the map export. Run map-renderer render for more.'
+                        : 'Chunk count appears after a full render (map-renderer render --force).';
+                parts.push(note);
+            }
+            statsBody.replaceChildren(...parts);
+        }
+
+        function setStatsPanel(open) {
+            statsPanel.hidden = !open;
+            statsToggle.setAttribute('aria-pressed', String(open));
+            if (open) {
+                setStructuresPanel(false);
+                statsDim = current;
+                renderStats();
+            }
+        }
+
+        statsToggle.addEventListener('click', () => setStatsPanel(statsPanel.hidden));
+        statsTabs.forEach(t => t.addEventListener('click', () => {
+            statsDim = t.dataset.statsDim;
+            renderStats();
+        }));
+
+        structuresToggle.addEventListener('click', () => setStructuresPanel(structuresPanel.hidden));
+        document.getElementById('info-close').addEventListener('click', hideInfo);
+
+        frame.addEventListener('load', () => {
+            upgradeZoom();
+            if (pendingView) {
+                applyView(pendingView);
+                pendingView = null;
+            }
+
+            // Keep this dimension's saved view up to date. The dimension and map
+            // are captured, so a late event from a map being unloaded can't
+            // overwrite another dimension's position.
+            const loadedDim = current;
+            const loadedMap = getUnmined();
+            const loadedOl = frame.contentWindow && frame.contentWindow.ol;
+            if (loadedMap && loadedMap.olMap) {
+                loadedMap.olMap.on('moveend', () => rememberView(loadedDim, readView(loadedMap, loadedOl)));
+            }
+
+            measureAttach();
+            renderMeasure(null);
+            const loadedWindow = frame.contentWindow;
+            structuresLoaded.then(() => {
+                if (frame.contentWindow === loadedWindow) attachStructures();
+                renderStats();
+            });
+
+            // The statistics panel follows the dimension shown on the map.
+            statsDim = current;
+            renderStats();
+            // Forward number keys from inside the map to the switcher.
+            try {
+                frame.contentWindow.addEventListener('keydown', onKey);
+            } catch (e) { /* ignore */ }
+        });
+
+        function onKey(e) {
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+            const map = { '1': 'overworld', '2': 'nether', '3': 'end' };
+            if (map[e.key]) {
+                select(map[e.key]);
+            } else if (e.key === 'm' || e.key === 'M') {
+                setMeasure(!measureActive);
+            } else if (e.key === 's' || e.key === 'S') {
+                setStructuresPanel(structuresPanel.hidden);
+            } else if (e.key === 'i' || e.key === 'I') {
+                setStatsPanel(statsPanel.hidden);
+            } else if (e.key === 'Escape' && !infoPanel.hidden) {
+                hideInfo();
+            } else if (e.key === 'Escape' && measureActive) {
+                if (measureDrawing && measureCtx) measureCtx.draw.abortDrawing();
+                else setMeasure(false);
+            } else if (e.key === 'Backspace' && measureDrawing && measureCtx) {
+                e.preventDefault();
+                measureCtx.draw.removeLastPoint();
+            }
+        }
+
+        buttons.forEach(b => b.addEventListener('click', () => select(b.dataset.dim)));
+        window.addEventListener('keydown', onKey);
+        window.addEventListener('hashchange', () => select(location.hash.slice(1), { pushHistory: false }));
+
+        select(location.hash.slice(1) || DEFAULT_DIM);
+    </script>
+</body>
+
+</html>

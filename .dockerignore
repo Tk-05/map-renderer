@@ -1,0 +1,9 @@
+.git
+.github
+.claude
+.cache
+.code-review-graph
+tools
+map
+server/docker-compose.yml
+*.md

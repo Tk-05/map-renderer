@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "map-renderer"
+version = "1.0.0"
+description = "Render the Minecraft web map with uNmINeD and scan Minecraft worlds for structures"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+map-renderer = "map_renderer.cli:main"
+
+[tool.setuptools]
+packages = ["map_renderer"]

@@ -1,0 +1,59 @@
+# Web map, optionally with a renderer that keeps it up to date from a Bedrock Realm.
+# The map is never part of the repository or the image. It comes from MAP_DIR:
+#
+#   MAP_DIR not set     Docker volume "map" (filled by the renderer)
+#   MAP_DIR=/srv/map    a folder on the host, e.g. a map rendered elsewhere with
+#                       map-renderer and copied/synced there (relative paths are
+#                       relative to this file). It must contain overworld/, nether/,
+#                       end/, stats.json, structures.json - the content of map/.
+#
+# A) Only serve a map folder from the host:
+#      .env:  MAP_DIR=/srv/minecraft-map
+#      docker compose up -d
+#    Updating the folder is enough; no restart needed.
+#
+# B) Render from a Realm on this server (the renderer writes into MAP_DIR or the volume):
+#      .env:  COMPOSE_PROFILES=realm
+#             REALM=My Realm
+#      docker compose run --rm renderer map-renderer realm login   (once: open the link, enter the code)
+#      docker compose run --rm renderer map-renderer realm list    (check the Realm name)
+#      docker compose up -d
+#      docker compose logs -f renderer                             (follow the first render)
+#
+# Other .env settings:
+#   INTERVAL=6h                 pause between renderer runs (30m, 6h, 1d, ...)
+#   REALM_SLOT=1                Realm world slot (default: the active one)
+#   BUILD_ARGS=--dims overworld extra map-renderer build options
+#   REALMS_CLIENT_VERSION=1.26.30   if the Realms API asks for a newer client
+#   MAP_RENDERER_IMAGE / MAP_RENDERER_RENDERER_IMAGE   image names (default: ghcr.io/tk-05/...)
+
+services:
+  web:
+    # Built by .github/workflows/build-image.yml (github.com/tk-05/map-renderer).
+    # Override the image names in the .env file, e.g. for locally built images.
+    image: ${MAP_RENDERER_IMAGE:-ghcr.io/tk-05/map-renderer:latest}
+    container_name: map-renderer
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ${MAP_DIR:-map}:/usr/share/nginx/html/map:ro
+
+  renderer:
+    image: ${MAP_RENDERER_RENDERER_IMAGE:-ghcr.io/tk-05/map-renderer-renderer:latest}
+    container_name: map-renderer-renderer
+    profiles: ["realm"]   # only started with COMPOSE_PROFILES=realm
+    restart: unless-stopped
+    environment:
+      REALM: ${REALM:-}
+      REALM_SLOT: ${REALM_SLOT:-}
+      INTERVAL: ${INTERVAL:-6h}
+      BUILD_ARGS: ${BUILD_ARGS:-}
+      REALMS_CLIENT_VERSION: ${REALMS_CLIENT_VERSION:-}
+    volumes:
+      - ${MAP_DIR:-map}:/app/map
+      - cache:/app/.cache
+
+volumes:
+  map:     # used when MAP_DIR is not set
+  cache:   # uNmINeD, Microsoft sign-in tokens, downloaded world, logs

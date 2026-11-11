@@ -1,0 +1,12 @@
+.claude/settings.local.json
+# uNmINeD CLI, Realm sign-in tokens and downloaded worlds (map-renderer cache, keep private)
+.cache/
+__pycache__/
+node_modules/
+server/html/
+Thumbs.db
+.DS_Store
+
+# The rendered map is generated (locally or by the renderer container), not versioned.
+map/*
+!map/.gitkeep
