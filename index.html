@@ -930,58 +930,103 @@
         let hiddenTypes = new Set();
         try { hiddenTypes = new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY)) || []); } catch (e) { /* ignore */ }
 
+        // Lookups by dimension and id, built once (structures.json can hold
+        // tens of thousands of entries with --extras).
+        const structuresByDim = new Map();
+        const structuresById = new Map();
+
         const structuresLoaded = fetch('map/structures.json', { cache: 'no-cache' })
             .then(r => (r.ok ? r.json() : { structures: [] }))
             .catch(() => ({ structures: [] }))
-            .then(doc => { structureDoc = doc; });
+            .then(doc => {
+                structureDoc = doc;
+                for (const s of doc.structures || []) {
+                    if (!structuresByDim.has(s.dim)) structuresByDim.set(s.dim, []);
+                    structuresByDim.get(s.dim).push(s);
+                    structuresById.set(s.id, s);
+                }
+            });
 
         const typeInfo = type => STRUCTURE_TYPES[type] || DEFAULT_TYPE;
-        const structuresIn = dim => (structureDoc ? structureDoc.structures.filter(s => s.dim === dim) : []);
-        const findStructure = id => structureDoc && structureDoc.structures.find(s => s.id === id);
+        const structuresIn = dim => structuresByDim.get(dim) || [];
+        const findStructure = id => structuresById.get(id) || null;
+
+        // Marker (colored ring + emoji) drawn once per type into a canvas.
+        // Drawing a cached image is far cheaper than a circle plus an emoji
+        // text for every structure. The canvas is created in the map's
+        // document, which belongs to the iframe's OpenLayers.
+        function markerImage(doc, type, selected) {
+            const t = typeInfo(type);
+            const ratio = Math.min(3, Math.max(1, Math.ceil(window.devicePixelRatio || 1)));
+            const radius = selected ? 13 : 10;
+            const line = selected ? 3 : 2;
+            const size = 2 * (radius + line);
+            const canvas = doc.createElement('canvas');
+            canvas.width = canvas.height = size * ratio;
+            const g = canvas.getContext('2d');
+            g.scale(ratio, ratio);
+            g.beginPath();
+            g.arc(size / 2, size / 2, radius, 0, 2 * Math.PI);
+            g.fillStyle = 'rgba(20, 20, 24, 0.85)';
+            g.fill();
+            g.lineWidth = line;
+            g.strokeStyle = selected ? '#fff' : t.color;
+            g.stroke();
+            g.font = (selected ? 14 : 11) + 'px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+            g.textAlign = 'center';
+            g.textBaseline = 'middle';
+            g.fillStyle = '#fff';
+            g.fillText(t.icon, size / 2, size / 2 + 1);
+            return { canvas, ratio };
+        }
 
         function structureStyle(ctx) {
             const ol = ctx.ol;
-            const cache = {};
+            const doc = ctx.u.olMap.getTargetElement().ownerDocument;
             const unit = blockUnit(ctx.u, ol);
+            const icons = new Map();   // type[:sel] -> Style
+            const labels = new Map();  // label text -> Style
 
             function icon(type, selected) {
                 const key = type + (selected ? ':sel' : '');
-                if (!cache[key]) {
-                    const t = typeInfo(type);
-                    cache[key] = new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: selected ? 13 : 10,
-                            fill: new ol.style.Fill({ color: 'rgba(20, 20, 24, 0.85)' }),
-                            stroke: new ol.style.Stroke({ color: selected ? '#fff' : t.color, width: selected ? 3 : 2 })
-                        }),
-                        text: new ol.style.Text({
-                            text: t.icon,
-                            font: (selected ? 14 : 11) + 'px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif',
-                            fill: new ol.style.Fill({ color: '#fff' })
-                        }),
+                let style = icons.get(key);
+                if (!style) {
+                    const { canvas, ratio } = markerImage(doc, type, selected);
+                    style = new ol.style.Style({
+                        image: new ol.style.Icon({ img: canvas, scale: 1 / ratio }),
                         zIndex: selected ? 2 : 1
                     });
+                    icons.set(key, style);
                 }
-                return cache[key];
+                return style;
             }
 
-            return (feature, resolution) => {
-                const s = feature.get('structure');
-                if (hiddenTypes.has(s.type) && s.id !== selectedId) return null;
-                const styles = [icon(s.type, s.id === selectedId)];
-                if (unit / resolution >= LABEL_MIN_PIXELS_PER_BLOCK || s.id === selectedId) {
-                    styles.push(new ol.style.Style({
+            function label(text) {
+                let style = labels.get(text);
+                if (!style) {
+                    style = new ol.style.Style({
                         text: new ol.style.Text({
-                            text: s.label,
+                            text,
                             font: '600 12px -apple-system, "Segoe UI", Roboto, sans-serif',
                             fill: new ol.style.Fill({ color: '#fff' }),
                             stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.85)', width: 3 }),
                             offsetY: 22
                         }),
                         zIndex: 3
-                    }));
+                    });
+                    labels.set(text, style);
                 }
-                return styles;
+                return style;
+            }
+
+            return (feature, resolution) => {
+                const s = feature.get('structure');
+                const selected = s.id === selectedId;
+                if (hiddenTypes.has(s.type) && !selected) return null;
+                if (unit / resolution >= LABEL_MIN_PIXELS_PER_BLOCK || selected) {
+                    return [icon(s.type, selected), label(s.label)];
+                }
+                return icon(s.type, selected);
             };
         }
 
@@ -1002,7 +1047,14 @@
                         return f;
                     })
                 });
-                ctx.layer = new ol.layer.Vector({ source: ctx.source, style: structureStyle(ctx), zIndex: 1500 });
+                // VectorImage draws all markers into one image and reuses it while
+                // panning and zooming, instead of redrawing every marker each frame.
+                ctx.layer = new ol.layer.VectorImage({
+                    source: ctx.source,
+                    style: structureStyle(ctx),
+                    zIndex: 1500,
+                    imageRatio: 1.5
+                });
                 u.olMap.addLayer(ctx.layer);
 
                 const hit = pixel => u.olMap.forEachFeatureAtPixel(pixel, f => f.get('structure'),
@@ -1013,9 +1065,21 @@
                     const s = hit(e.pixel);
                     if (s) showInfo(s); else hideInfo();
                 });
+
+                // Hover cursor: at most one hit test per frame.
+                let hoverPixel = null;
+                const target = u.olMap.getTargetElement();
+                const view = target.ownerDocument.defaultView;
                 u.olMap.on('pointermove', e => {
                     if (measureActive || e.dragging) return;
-                    u.olMap.getTargetElement().style.cursor = hit(e.pixel) ? 'pointer' : '';
+                    if (hoverPixel === null) {
+                        view.requestAnimationFrame(() => {
+                            const over = !measureActive && hit(hoverPixel);
+                            target.style.cursor = over ? 'pointer' : '';
+                            hoverPixel = null;
+                        });
+                    }
+                    hoverPixel = e.pixel;
                 });
 
                 structCtx = ctx;
