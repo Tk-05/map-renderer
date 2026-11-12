@@ -246,11 +246,38 @@ OVERVIEW_CHUNKS = 32 * CHUNKS_PER_REGION  # overview tile: 32x32 regions, 1 byte
 _TO_VALUE = bytes([0 if b == bedrock.UNKNOWN else b + 1 for b in range(256)])
 
 
+HEIGHT_DIMS = frozenset({"overworld"})
+
+
+def write_heights(folder: Path, chunk_heights: dict[tuple[int, int], bytes]) -> None:
+    """h.<rx>.<rz>.bin per region: 128 x 128 cells of uint16 (y + 65, 0 = unknown),
+    stored as all low bytes, then all high bytes (zlib); the high bytes are
+    nearly all 0 or 1, so this compresses far better than interleaved."""
+    n = REGION_CELLS * REGION_CELLS
+    regions: dict[tuple[int, int], bytearray] = {}
+    for (cx, cz), packed in chunk_heights.items():
+        key = (cx // CHUNKS_PER_REGION, cz // CHUNKS_PER_REGION)
+        planes = regions.get(key)
+        if planes is None:
+            planes = regions[key] = bytearray(2 * n)
+        col = (cx % CHUNKS_PER_REGION) * bedrock.CELLS
+        row = (cz % CHUNKS_PER_REGION) * bedrock.CELLS
+        for i in range(bedrock.CELLS * bedrock.CELLS):
+            lo, hi = packed[2 * i], packed[2 * i + 1]
+            at = (row + i // bedrock.CELLS) * REGION_CELLS + col + i % bedrock.CELLS
+            planes[at] = lo
+            planes[n + at] = hi
+    for (rx, rz), planes in regions.items():
+        (folder / f"h.{rx}.{rz}.bin").write_bytes(zlib.compress(bytes(planes), 9))
+
+
 def write_lookup(map_dir: Path, world: Path, dims: list[str],
                  top_y: dict[str, int] | None = None) -> dict[str, Counter]:
     """Write the lookup files of `dims`; returns the cell count per biome number.
-    `top_y`: per dimension the same --topY the map was rendered with."""
-    chunks = bedrock.surface_biomes(world, dims, top_y)
+    `top_y`: per dimension the same --topY the map was rendered with.
+    Surface heights (h.<rx>.<rz>.bin) are written for the Overworld only: the
+    Nether's height map is its bedrock roof."""
+    chunks, heights = bedrock.surface_biomes(world, dims, top_y, height_dims=HEIGHT_DIMS & frozenset(dims))
     root = map_dir / LOOKUP_DIR
     counts: dict[str, Counter] = {}
     for dim in dims:
@@ -297,6 +324,9 @@ def write_lookup(map_dir: Path, world: Path, dims: list[str],
             "overview": {"size": OVERVIEW_CHUNKS * 16, "pixels": OVERVIEW_CHUNKS,
                          "tiles": sorted([gx, gz] for gx, gz in tiles)},
         }
+        if dim in heights:
+            write_heights(staging, heights[dim])
+            index["heights"] = True
         (staging / "index.json").write_text(json.dumps(index, separators=(",", ":")), encoding="utf-8")
         old = root / f"{dim}.old"
         shutil.rmtree(old, ignore_errors=True)

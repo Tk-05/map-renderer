@@ -97,7 +97,7 @@
 
         /* Dimension statistics */
         #stats {
-            top: 48px;
+            top: 8px;
             right: 58px; /* left of the tool bar */
             width: 280px;
             max-height: calc(100vh - 120px);
@@ -161,10 +161,10 @@
         #stats dd { margin: 0; text-align: right; color: #fff; }
         #stats .type-icon { width: 16px; height: 16px; font-size: 9px; }
 
-        /* Tool bar (right edge, below uNmINeD's coordinate display) */
+        /* Tool bar (right edge; uNmINeD's coordinate display is removed, see tidyUnminedUi) */
         #tools {
             position: absolute;
-            top: 48px;
+            top: 8px;
             right: 8px;
             z-index: 10;
             display: flex;
@@ -208,6 +208,183 @@
         }
 
         #tools button[hidden] { display: none; }
+
+        /* Groups in the tool bar: find | panels | tools | help */
+        #tools .sep {
+            height: 1px;
+            margin: 2px 6px;
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        #layers-toggle { position: relative; --accent: #2c7a7b; }
+        #help-toggle   { --accent: #555c66; }
+
+        /* Number of active layers on the layers button */
+        #layers-toggle .badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 14px;
+            height: 14px;
+            padding: 0 3px;
+            box-sizing: border-box;
+            border-radius: 7px;
+            background: #f39c12;
+            color: #111;
+            font: 700 10px/14px -apple-system, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+        }
+
+        #layers-toggle .badge[hidden] { display: none; }
+
+        kbd {
+            display: inline-block;
+            min-width: 16px;
+            padding: 0 4px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #d6d6dc;
+            font: 600 11px/16px -apple-system, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+        }
+
+        /* Layers: map type and overlays */
+        #layers {
+            top: 8px;
+            right: 58px; /* left of the tool bar, the spot the other panels use */
+            width: 290px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        #layers h3,
+        #help h3 {
+            margin: 10px 0 4px;
+            color: #9a9aa4;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        #layers .segmented {
+            display: flex;
+            gap: 2px;
+            padding: 2px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #layers .segmented button {
+            flex: 1;
+            padding: 6px 8px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: #d6d6dc;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #layers .segmented button:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+        #layers .segmented button[aria-pressed="true"] { background: var(--accent, #2c7a7b); color: #fff; }
+        #layers .segmented button[hidden] { display: none; }
+        #map-normal    { --accent: #3d5a80; }
+        #layers #biomes-toggle { --accent: #5d8f2c; }
+        #layers #caves-toggle  { --accent: #8a6d3b; }
+        #layers-note { margin: 6px 0 0; }
+
+        .layer-switch {
+            display: grid;
+            grid-template-columns: 20px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin: 2px 0;
+            padding: 7px 8px;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: #d6d6dc;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .layer-switch:hover { background: rgba(255, 255, 255, 0.07); }
+        .layer-switch:focus-visible,
+        #layers .segmented button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+        .layer-switch[hidden] { display: none; }
+        .layer-switch svg { width: 18px; height: 18px; }
+        .layer-switch .text { display: flex; flex-direction: column; min-width: 0; }
+        .layer-switch .name { display: flex; align-items: center; gap: 6px; color: #fff; font-weight: 600; }
+        .layer-switch .desc { color: #9a9aa4; font-size: 12px; line-height: 1.35; }
+
+        /* On/off switch */
+        .layer-switch .switch {
+            position: relative;
+            width: 30px;
+            height: 17px;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.18);
+            transition: background-color 0.15s;
+        }
+
+        .layer-switch .switch::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform 0.15s;
+        }
+
+        .layer-switch[aria-pressed="true"] .switch { background: #2ecc71; }
+        .layer-switch[aria-pressed="true"] .switch::after { transform: translateX(13px); }
+
+        /* Help: shortcuts and colours */
+        #help {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30;
+            width: min(620px, calc(100vw - 32px));
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        #help .panel-header { display: flex; align-items: center; justify-content: space-between; }
+        #help .panel-header h2 { margin: 0; }
+
+        #help-close {
+            padding: 4px 10px;
+            border: 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #help-close:hover { background: rgba(255, 255, 255, 0.18); }
+        #help .help-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+        #help dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0; align-items: center; }
+        #help dt { white-space: nowrap; }
+        #help dd { margin: 0; }
+        #help .line { display: inline-block; width: 26px; border-top: 3px solid var(--c); vertical-align: middle; }
+        #help .line.dashed { border-top-style: dashed; }
+        #help .ring { display: inline-block; width: 12px; height: 12px; border: 2px dashed var(--c); border-radius: 50%; vertical-align: middle; }
+
+        @media (max-width: 560px) {
+            #help .help-cols { grid-template-columns: 1fr; }
+        }
 
         #tools svg {
             width: 18px;
@@ -264,7 +441,7 @@
 
         /* Structure legend */
         #structures {
-            top: 48px;
+            top: 8px;
             right: 58px; /* left of the tool bar */
             width: 220px;
             max-height: calc(100vh - 120px);
@@ -334,7 +511,7 @@
 
         /* Biome legend (shown with the biome map) */
         #biomes {
-            top: 48px;
+            top: 8px;
             right: 58px; /* left of the tool bar */
             width: 240px;
             max-height: calc(100vh - 120px);
@@ -493,7 +670,7 @@
 
         /* Search: coordinates, structures, biomes */
         #search {
-            top: 64px;
+            top: 56px;
             left: 8px;
             width: 340px;
             padding: 8px;
@@ -591,6 +768,7 @@
         #search-toggle { --accent: #6a5acd; }
         #slime-toggle  { --accent: #4e9a3c; }
         #grid-toggle   { --accent: #5d6d7e; }
+        #ghosts-toggle { --accent: #8e44ad; }
         #caves-toggle  { --accent: #8a6d3b; }
 
         /* Short notice at the bottom, e.g. "zoom in to see slime chunks" */
@@ -609,6 +787,96 @@
         }
 
         #map-hint[hidden] { display: none; }
+
+        /* Cursor info: X · Y · Z · biome · chunk · slime under the mouse */
+        #cursor-info {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 0;
+            padding: 3px 10px;
+            border-radius: 7px;
+            background: rgba(20, 20, 24, 0.82);
+            color: #d6d6dc;
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        #cursor-info[hidden] { display: none; }
+        #cursor-info span + span::before { content: "·"; margin: 0 7px; color: #6c6c76; }
+        #cursor-info .biome { color: #fff; }
+        #cursor-info .biome::after {
+            content: "";
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin-left: 5px;
+            border-radius: 2px;
+            background: var(--biome-color);
+            vertical-align: -1px;
+        }
+        #cursor-info .slime { color: #8ee06b; font-weight: 600; }
+
+        /* Right-click menu (replaces uNmINeD's) */
+        #ctx-menu {
+            position: fixed;
+            z-index: 40;
+            min-width: 250px;
+            max-width: calc(100vw - 16px);
+            padding: 5px;
+        }
+
+        #ctx-menu .ctx-head {
+            padding: 4px 9px 6px;
+            color: #9a9aa4;
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.4;
+        }
+
+        #ctx-menu .ctx-head b { color: #fff; font-size: 13px; }
+
+        #ctx-menu .ctx-head .swatch {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin: 0 4px 0 2px;
+            border-radius: 2px;
+            background: var(--biome-color);
+            vertical-align: -1px;
+        }
+
+        #ctx-menu .ctx-sep { height: 1px; margin: 4px 6px; background: rgba(255, 255, 255, 0.12); }
+
+        #ctx-menu button {
+            display: grid;
+            grid-template-columns: 16px 1fr auto;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 6px 9px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: #e6e6ea;
+            font: inherit;
+            font-size: 13px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        #ctx-menu button:hover,
+        #ctx-menu button:focus-visible { background: rgba(255, 255, 255, 0.1); color: #fff; outline: none; }
+        #ctx-menu .check { color: #2ecc71; font-weight: 700; text-align: center; }
+        #ctx-menu .hint { color: #8a8a94; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+        /* Keep the hint above the cursor line */
+        #map-hint { bottom: 40px; }
 
         /* Marks the map centre ("from here") while the search is open */
         #search-crosshair {
@@ -775,6 +1043,25 @@
                 max-height: calc(100vh - 200px);
             }
 
+            #layers {
+                width: min(290px, calc(100vw - 74px));
+                max-height: calc(100vh - 200px);
+            }
+
+            /* Bottom is taken by the dimension switcher and the scale bar here. */
+            #cursor-info {
+                top: 8px;
+                bottom: auto;
+                max-width: calc(100vw - 90px);
+                overflow: hidden;
+                font-size: 11px;
+            }
+
+            #tools button {
+                width: 34px;
+                height: 34px;
+            }
+
             #search {
                 width: calc(100vw - 74px);
             }
@@ -802,6 +1089,16 @@
                 <path d="M10.3 10.3l4.2 4.2" stroke-linecap="round" />
             </svg>
         </button>
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" id="layers-toggle" aria-pressed="false" aria-controls="layers"
+            aria-label="Layers" title="Layers: map type and overlays (key L)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M8 2.2l6 3.2-6 3.2-6-3.2z" stroke-linejoin="round" />
+                <path d="M2 8.4l6 3.2 6-3.2" stroke-linejoin="round" />
+                <path d="M2 11.2l6 3.2 6-3.2" stroke-linejoin="round" />
+            </svg>
+            <span class="badge" id="layers-badge" hidden></span>
+        </button>
         <button type="button" id="structures-toggle" aria-pressed="false" aria-controls="structures"
             aria-label="Structures" title="Structures (key S)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -816,35 +1113,7 @@
                 <path d="M4 12V8M8 12V3.5M12 12V6" stroke-width="2" stroke-linecap="round" />
             </svg>
         </button>
-        <button type="button" id="biomes-toggle" aria-pressed="false" aria-controls="biomes"
-            aria-label="Biome map" title="Biome map (key B)" hidden>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path d="M2.5 13.5c0-6.5 4.5-11 11-11 0 6.5-4.5 11-11 11z" />
-                <path d="M2.5 13.5l6-6" stroke-linecap="round" />
-            </svg>
-        </button>
-        <button type="button" id="caves-toggle" aria-pressed="false" hidden
-            aria-label="Cave map" title="Cave map, Overworld (key C)">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path d="M1.5 13.5h13" stroke-linecap="round" />
-                <path d="M2.5 13.5c0-5 2.4-9 5.5-9s5.5 4 5.5 9" />
-                <path d="M6 13.5c0-2.2.9-4 2-4s2 1.8 2 4" />
-            </svg>
-        </button>
-        <button type="button" id="grid-toggle" aria-pressed="false"
-            aria-label="Chunk and region grid" title="Chunk and region grid (key G)">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
-                <rect x="2" y="2" width="12" height="12" />
-                <path d="M6 2v12M10 2v12M2 6h12M2 10h12" />
-            </svg>
-        </button>
-        <button type="button" id="slime-toggle" aria-pressed="false" hidden
-            aria-label="Slime chunks" title="Slime chunks (key K, Overworld)">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <rect x="2.5" y="3.5" width="11" height="10" rx="2.5" />
-                <path d="M5.5 7.5v1.2M10.5 7.5v1.2M6.5 11h3" stroke-linecap="round" />
-            </svg>
-        </button>
+        <span class="sep" aria-hidden="true"></span>
         <button type="button" id="radius-toggle" aria-pressed="false" aria-controls="radius"
             aria-label="Farm radius" title="Farm radius: spawn and despawn circles (key R)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -860,7 +1129,118 @@
                 <path d="M4.5 8.5l1.5 1.5M6.5 6.5l1 1M8.5 4.5l1.5 1.5" />
             </svg>
         </button>
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" id="help-toggle" aria-pressed="false" aria-controls="help"
+            aria-label="Help" title="Keyboard shortcuts and colours (key ?)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="8" cy="8" r="6.3" />
+                <path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.6" stroke-linecap="round" />
+                <circle cx="8" cy="11.6" r="0.5" fill="currentColor" />
+            </svg>
+        </button>
     </div>
+
+    <section id="layers" class="panel" aria-label="Layers" hidden>
+        <h2>Layers</h2>
+        <h3>Map</h3>
+        <div class="segmented" role="group" aria-label="Map type">
+            <button type="button" id="map-normal" aria-pressed="true" title="Normal map">Normal</button>
+            <button type="button" id="biomes-toggle" aria-pressed="false" aria-controls="biomes"
+                title="Biome map with legend (key B)" hidden>Biomes</button>
+            <button type="button" id="caves-toggle" aria-pressed="false"
+                title="Cave map, Overworld (key C)" hidden>Caves</button>
+        </div>
+        <p class="muted" id="layers-note" hidden></p>
+        <h3>Overlays</h3>
+        <button type="button" class="layer-switch" id="cursor-toggle" aria-pressed="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M3 2.5l9.5 5-4 1-1.6 4z" stroke-linejoin="round" />
+            </svg>
+            <span class="text"><span class="name">Cursor info</span>
+                <span class="desc">X · Y · Z, biome, chunk and slime chunk under the mouse</span></span>
+            <span class="switch" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="layer-switch" id="ghosts-toggle" aria-pressed="false" hidden>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="6" cy="8" r="4.2" />
+                <circle cx="10" cy="8" r="4.2" stroke-dasharray="2 1.6" />
+            </svg>
+            <span class="text"><span class="name">Other dimension <kbd>O</kbd></span>
+                <span class="desc">Portals and waypoints of the other side (1:8), portal links</span></span>
+            <span class="switch" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="layer-switch" id="grid-toggle" aria-pressed="false">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+                <rect x="2" y="2" width="12" height="12" />
+                <path d="M6 2v12M10 2v12M2 6h12M2 10h12" />
+            </svg>
+            <span class="text"><span class="name">Chunk grid <kbd>G</kbd></span>
+                <span class="desc">Chunks close up, regions further out</span></span>
+            <span class="switch" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="layer-switch" id="slime-toggle" aria-pressed="false" hidden>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <rect x="2.5" y="3.5" width="11" height="10" rx="2.5" />
+                <path d="M5.5 7.5v1.2M10.5 7.5v1.2M6.5 11h3" stroke-linecap="round" />
+            </svg>
+            <span class="text"><span class="name">Slime chunks <kbd>K</kbd></span>
+                <span class="desc">Bedrock, Overworld; zoom in to see them</span></span>
+            <span class="switch" aria-hidden="true"></span>
+        </button>
+    </section>
+
+    <section id="help" class="panel" aria-label="Keyboard shortcuts and colours" hidden>
+        <div class="panel-header">
+            <h2>Keyboard shortcuts</h2>
+            <button type="button" id="help-close">Close</button>
+        </div>
+        <div class="help-cols">
+            <div>
+                <h3>Move around</h3>
+                <dl>
+                    <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Overworld, Nether, End</dd>
+                    <dt><kbd>F</kbd> <kbd>/</kbd></dt><dd>Search coordinates, structures, biomes</dd>
+                    <dt><kbd>Esc</kbd></dt><dd>Close the open panel or tool</dd>
+                </dl>
+                <h3>Panels</h3>
+                <dl>
+                    <dt><kbd>L</kbd></dt><dd>Layers</dd>
+                    <dt><kbd>S</kbd></dt><dd>Structures and waypoints</dd>
+                    <dt><kbd>I</kbd></dt><dd>Statistics</dd>
+                    <dt><kbd>?</kbd></dt><dd>This help</dd>
+                </dl>
+                <h3>Tools</h3>
+                <dl>
+                    <dt><kbd>R</kbd></dt><dd>Farm radius around a point</dd>
+                    <dt><kbd>M</kbd></dt><dd>Measure a distance</dd>
+                </dl>
+            </div>
+            <div>
+                <h3>Layers</h3>
+                <dl>
+                    <dt><kbd>B</kbd></dt><dd>Biome map</dd>
+                    <dt><kbd>C</kbd></dt><dd>Cave map</dd>
+                    <dt><kbd>O</kbd></dt><dd>Other dimension</dd>
+                    <dt><kbd>G</kbd></dt><dd>Chunk grid</dd>
+                    <dt><kbd>K</kbd></dt><dd>Slime chunks</dd>
+                </dl>
+                <h3>Portal links</h3>
+                <dl class="colours">
+                    <dt><span class="line" style="--c:#2ecc71"></span></dt><dd>works both ways</dd>
+                    <dt><span class="line dashed" style="--c:#f39c12"></span></dt><dd>one-way: back to another portal</dd>
+                    <dt><span class="ring" style="--c:#e74c3c"></span></dt><dd>no partner: a new portal is built</dd>
+                </dl>
+                <h3>Farm radius (Bedrock)</h3>
+                <dl class="colours">
+                    <dt><span class="line" style="--c:#e74c3c"></span></dt><dd>24: no spawning closer</dd>
+                    <dt><span class="line" style="--c:#f1c40f"></span></dt><dd>32: random despawn from here</dd>
+                    <dt><span class="line" style="--c:#2ecc71"></span></dt><dd>44: limit, simulation distance 4</dd>
+                    <dt><span class="line" style="--c:#3498db"></span></dt><dd>128: limit, simulation distance 6+</dd>
+                    <dt><span class="line dashed" style="--c:#ff9f1a"></span></dt><dd>spawn chunks (simulation distance)</dd>
+                </dl>
+            </div>
+        </div>
+    </section>
 
     <section id="structures" class="panel" aria-label="Structures" hidden>
         <div class="panel-header">
@@ -905,7 +1285,9 @@
         <ul id="search-results" role="listbox" aria-label="Results"></ul>
     </section>
     <div id="search-crosshair" hidden></div>
+    <div id="ctx-menu" class="panel" role="menu" aria-label="Map menu" hidden></div>
     <div id="map-hint" role="status" hidden></div>
+    <div id="cursor-info" aria-live="off" hidden></div>
 
     <div id="biome-tip" role="status" hidden><span class="swatch"></span><span class="name"></span></div>
 
@@ -928,6 +1310,12 @@
         <div class="actions">
             <button type="button" id="measure-finish">Finish</button>
             <button type="button" id="measure-clear">Clear</button>
+        </div>
+        <div class="actions">
+            <button type="button" id="measure-copy-path" hidden
+                title="Copy this line as a path entry for markers.json (road, ice highway, rail)">Copy as path</button>
+            <button type="button" id="measure-copy-area" hidden
+                title="Copy this line as an area entry for markers.json (town, claim); it is closed automatically">Copy as area</button>
         </div>
     </section>
 
@@ -997,6 +1385,36 @@
 
         // Replace uNmINeD's view with one that ignores devicePixelRatio and
         // allows zooming past 1:1.
+        // Remove uNmINeD's own coordinate display (top right), zoom buttons and
+        // coordinate grid with edge labels: the cursor info line and the chunk
+        // grid (Layers) replace them. Done from here, because uNmINeD rewrites
+        // its files on every render. The scale bar stays.
+        function tidyUnminedUi() {
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol || u.mapRendererTidied) return;
+            try {
+                const map = u.olMap;
+                // uNmINeD's right-click menu (ol-contextmenu) is replaced by our own (see openMapMenu).
+                const UnminedMenu = frame.contentWindow.ContextMenu;
+                for (const c of map.getControls().getArray().slice()) {
+                    if (c instanceof ol.control.MousePosition || c instanceof ol.control.Zoom
+                        || (UnminedMenu && c instanceof UnminedMenu)) map.removeControl(c);
+                }
+                const dropGrid = function () {
+                    if (this.gridLayer) this.olMap.removeLayer(this.gridLayer);
+                    if (this.coordinateLayer) this.olMap.removeLayer(this.coordinateLayer);
+                    this.gridLayer = null;
+                    this.coordinateLayer = null;
+                };
+                dropGrid.call(u);
+                u.updateGraticule = dropGrid; // also keeps "Show grid" in the context menu from bringing it back
+                u.mapRendererTidied = true;
+            } catch (e) {
+                console.warn('Could not tidy the uNmINeD controls', e);
+            }
+        }
+
         function upgradeZoom() {
             const u = getUnmined();
             const ol = frame.contentWindow && frame.contentWindow.ol;
@@ -1123,6 +1541,7 @@
             cavesToggle.title = 'Cave map' + (top !== undefined ? ' (y = ' + top + ' and below)' : '')
                 + ', Overworld (key C)';
             updateMapHint(shown ? 'Cave map: y = ' + caveDoc.dimensions[current].topY + ' and below' : null);
+            updateLayersUi();
         }
 
         function setCaveMode(on) {
@@ -1140,7 +1559,8 @@
             if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
         }
 
-        cavesToggle.addEventListener('click', () => setCaveMode(!caveMode));
+        // In the layers panel "Caves" is one of three map types: choosing it again changes nothing.
+        cavesToggle.addEventListener('click', () => setCaveMode(true));
 
         const biomesLoaded = fetch('map/biomes.json', { cache: 'no-cache' })
             .then(r => (r.ok ? r.json() : null))
@@ -1150,6 +1570,7 @@
                 biomesToggle.hidden = !biomeDoc;
                 biomesToggle.setAttribute('aria-pressed', String(biomeMode && !!biomeDoc));
                 if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
+                updateLayersUi();
             });
 
         // Load the other export of the current dimension at the same position.
@@ -1297,6 +1718,7 @@
                     .then(r => (r.ok ? r.json() : null))
                     .then(index => index && {
                         regions: new Set((index.regions || []).map(([rx, rz]) => rx + ':' + rz)),
+                        heights: Boolean(index.heights), // h.<rx>.<rz>.bin present (Overworld)
                         overview: index.overview ? {
                             size: index.overview.size,     // blocks per overview tile
                             pixels: index.overview.pixels, // bytes per tile side (1 per chunk)
@@ -1559,6 +1981,7 @@
             if (open) {
                 setStructuresPanel(false); // the panels share one spot
                 setStatsPanel(false);
+                setLayersPanel(false);
                 renderBiomeLegend();
             }
         }
@@ -1575,6 +1998,7 @@
             if (!on) hideBiomeTip();
             setBiomesPanel(on);
             if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
+            updateLayersUi();
         }
 
         // Off -> biome map + legend; on with the legend hidden -> show legend; else off.
@@ -1585,7 +2009,10 @@
             else setBiomeMode(false);
         }
 
-        biomesToggle.addEventListener('click', toggleBiomes);
+        // Map type "Biomes" in the layers panel: switch to it, or show its legend if it is on.
+        biomesToggle.addEventListener('click', () => {
+            if (!biomeMode) setBiomeMode(true); else setBiomesPanel(true);
+        });
 
         // `view` overrides the carried-over position (used to jump to a structure).
         function select(dim, { pushHistory = true, view = null } = {}) {
@@ -1775,6 +2202,22 @@
             }
             measureFinish.hidden = !measureDrawing;
             measureClear.hidden = !hasLine;
+            // A finished line can become a path or (3+ points) an area in markers.json.
+            measureCopyPath.hidden = !hasLine || measureDrawing;
+            measureCopyArea.hidden = !hasLine || measureDrawing || pts.length < 3;
+            measureCopyPath.onclick = () => copyShape('path', pts);
+            measureCopyArea.onclick = () => copyShape('area', pts);
+        }
+
+        const measureCopyPath = document.getElementById('measure-copy-path');
+        const measureCopyArea = document.getElementById('measure-copy-area');
+
+        // markers.json entry for a measured line, to paste into "paths" or "areas".
+        function copyShape(kind, pts) {
+            const points = pts.map(p => [Math.floor(p[0]), Math.floor(p[1])]);
+            const entry = { name: kind === 'path' ? 'New path' : 'New area', dim: current, points };
+            const text = '    ' + JSON.stringify(entry).replace(/,"/g, ', "').replace(/":/g, '": ').replace(/\],\[/g, '], [') + ',';
+            if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
         }
 
         function measureAttach() {
@@ -2083,7 +2526,7 @@
             u.olMap.on('singleclick', e => {
                 if (!radiusActive) return;
                 const b = ol.proj.transform(e.coordinate, u.viewProjection, u.dataProjection);
-                setPlaced('radius', current, { x: Math.floor(b[0]), z: Math.floor(b[1]) });
+                setPlaced('radius', current, { x: Math.floor(b[0]) || 0, z: Math.floor(b[1]) || 0 });
                 drawRadius();
             });
             radiusCtx = { u, ol, source, layer };
@@ -2312,7 +2755,17 @@
                         return;
                     }
                     const s = hit(e.pixel);
-                    if (s) showInfo(s); else closeInfo();
+                    if (s) {
+                        showInfo(s);
+                        return;
+                    }
+                    const shape = shapeAt(e.pixel); // own paths and areas
+                    if (shape) {
+                        showShape(shape);
+                        return;
+                    }
+                    const g = ghostAt(e.pixel); // other dimension's portal / waypoint
+                    if (g) showGhost(g); else closeInfo();
                 });
 
                 // Hover cursor: at most one hit test per frame.
@@ -2323,7 +2776,8 @@
                     if (measureActive || radiusActive || e.dragging) return;
                     if (hoverPixel === null) {
                         view.requestAnimationFrame(() => {
-                            const over = !measureActive && (waypointAt(hoverPixel) || hit(hoverPixel));
+                            const over = !measureActive && (waypointAt(hoverPixel) || hit(hoverPixel)
+                                || shapeAt(hoverPixel) || ghostAt(hoverPixel));
                             target.style.cursor = over ? 'pointer' : '';
                             hoverPixel = null;
                         });
@@ -2353,6 +2807,7 @@
         function refreshStructures() {
             if (structCtx) structCtx.layer.changed();
             if (waypointCtx) waypointCtx.layer.setVisible(!hiddenTypes.has(WAYPOINT_TYPE));
+            if (shapeCtx) shapeCtx.layer.setVisible(!hiddenTypes.has(SHAPES_TYPE));
         }
 
         function saveHiddenTypes() {
@@ -2385,6 +2840,12 @@
             structuresList.replaceChildren();
             const types = Object.keys(counts).sort((a, b) => labels[a].localeCompare(labels[b]));
             // Own waypoints (markers.json) first.
+            const shapeCount = shapesIn(current).length;
+            if (shapeCount) {
+                types.unshift(SHAPES_TYPE);
+                counts[SHAPES_TYPE] = shapeCount;
+                labels[SHAPES_TYPE] = 'Paths & areas';
+            }
             const ownCount = waypointsIn(current).length;
             if (ownCount) {
                 types.unshift(WAYPOINT_TYPE);
@@ -2405,7 +2866,8 @@
                 });
                 const iconEl = document.createElement('span');
                 iconEl.className = 'type-icon';
-                const look = type === WAYPOINT_TYPE ? { icon: '📍', color: '#e74c3c' } : typeInfo(type);
+                const look = type === WAYPOINT_TYPE ? { icon: '📍', color: '#e74c3c' }
+                    : type === SHAPES_TYPE ? { icon: '〰️', color: '#74b9ff' } : typeInfo(type);
                 iconEl.style.setProperty('--type-color', look.color);
                 iconEl.textContent = look.icon;
                 const name = document.createElement('span');
@@ -2430,6 +2892,7 @@
             if (open) {
                 setStatsPanel(false); // the panels use the same spot
                 biomesPanel.hidden = true;
+                setLayersPanel(false);
                 renderLegend();
             }
         }
@@ -2464,6 +2927,15 @@
                 lines.push('Exits in the ' + dimLabel(s.target.dim) + ' near ' + s.target.x + ', ' + s.target.z);
                 if (linked) {
                     lines.push('Linked portal: ' + linked.x + ', ' + linked.y + ', ' + linked.z);
+                    // Return trip: does the other portal lead back here?
+                    const back = linked.link && findStructure(linked.link);
+                    if (linked.link === s.id) {
+                        lines.push('Way back: arrives at this portal ✓');
+                    } else if (back) {
+                        lines.push('Way back: arrives at another portal (' + back.x + ', ' + back.y + ', ' + back.z + ') ✗');
+                    } else {
+                        lines.push('Way back: the game would build a new portal ✗');
+                    }
                     go.textContent = 'Go to linked portal';
                     go.onclick = () => goTo(linked.dim, linked.x, linked.z, linked.id);
                 } else {
@@ -2496,6 +2968,7 @@
                 selectedId = null;
                 refreshStructures();
                 if (waypointCtx) waypointCtx.layer.changed();
+                if (shapeCtx) shapeCtx.layer.changed();
             }
         }
 
@@ -2574,7 +3047,7 @@
         let searchFrom = null;   // { dim, x, z }
         let searchSelectAfter = null;
 
-        const fmtCoord = n => Math.round(n).toLocaleString();
+        const fmtCoord = n => (Math.round(n) || 0).toLocaleString(); // || 0: no "-0"
 
         function compass(dx, dz) {
             if (Math.abs(dx) < 1 && Math.abs(dz) < 1) return 'here';
@@ -2796,6 +3269,21 @@
                 // Own waypoints by name or description.
                 items.push(...waypointSearchItems(w =>
                     norm(w.name).includes(query) || norm(w.description).includes(query), from));
+
+                // Own paths and areas by name or description.
+                for (const s of shapes.filter(s => norm(s.name).includes(query) || norm(s.description).includes(query))) {
+                    const [x, z] = shapeCentre(s);
+                    const origin = s.dim === current ? from : searchOriginIn(s.dim);
+                    const comparable = s.dim === current || (DIMENSIONS[current].scale && DIMENSIONS[s.dim].scale);
+                    items.push({
+                        title: s.name,
+                        detail: (s.kind === 'path' ? 'Path · ' + fmtBlocks(shapeLength(s.points)) : 'Area')
+                            + (comparable ? ' · ' + distanceText(origin, x, z) : ''),
+                        dimTag: s.dim !== current ? DIMENSIONS[s.dim].label : null,
+                        icon: { text: s.kind === 'path' ? '〰️' : '⬠', color: s.color },
+                        run: () => goToShape(s)
+                    });
+                }
 
                 // Structures: nearest of each matching type (current dimension first).
                 const matching = [...searchableTypes()].filter(([type, t]) =>
@@ -3056,6 +3544,7 @@
             slimeToggle.hidden = !isBedrock() || current !== 'overworld';
             slimeToggle.setAttribute('aria-pressed', String(slimeOn));
             updateMapHint();
+            updateLayersUi();
         }
 
         // One notice line at the bottom: the slime zoom hint wins over the cave map label.
@@ -3265,10 +3754,237 @@
             try { localStorage.setItem(GRID_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
             gridToggle.setAttribute('aria-pressed', String(on));
             if (gridLayer) gridLayer.layer.setVisible(on);
+            updateLayersUi();
         }
 
         gridToggle.setAttribute('aria-pressed', String(gridOn));
         gridToggle.addEventListener('click', () => setGrid(!gridOn));
+
+        // ---- Other dimension ("ghosts") and portal links --------------------
+        // On the Overworld, the Nether's portals and waypoints appear at x8,
+        // on the Nether the Overworld's at /8, as translucent "ghosts". Each
+        // portal gets a line to the ghost of the portal it links to:
+        //   green          the link works both ways
+        //   orange dashed  one-way: coming back you arrive at another portal
+        //   red ring       no partner: the game would build a new portal
+        // Links come from map-renderer's scan (scan.py, link_portals).
+
+        const GHOSTS_KEY = 'map-renderer.ghosts';
+        const ghostsToggle = document.getElementById('ghosts-toggle');
+        let ghostsOn = false;
+        try { ghostsOn = localStorage.getItem(GHOSTS_KEY) === '1'; } catch (e) { /* ignore */ }
+        let ghostCtx = null; // { u, layer } of the loaded map
+
+        const otherDimension = dim => (dim === 'overworld' ? 'nether' : dim === 'nether' ? 'overworld' : null);
+
+        // Translucent version of a marker: dashed ring or rounded square with the emoji.
+        function ghostImage(doc, icon, color, square) {
+            const ratio = Math.min(3, Math.max(1, Math.ceil(window.devicePixelRatio || 1)));
+            const size = 26;
+            const canvas = doc.createElement('canvas');
+            canvas.width = canvas.height = size * ratio;
+            const g = canvas.getContext('2d');
+            g.scale(ratio, ratio);
+            g.beginPath();
+            if (square) g.roundRect(3, 3, size - 6, size - 6, 6); else g.arc(size / 2, size / 2, 10, 0, 2 * Math.PI);
+            g.fillStyle = 'rgba(20, 20, 24, 0.45)';
+            g.fill();
+            g.setLineDash([3, 2.5]);
+            g.lineWidth = 2;
+            g.strokeStyle = color;
+            g.stroke();
+            g.globalAlpha = 0.6;
+            g.font = '12px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+            g.textAlign = 'center';
+            g.textBaseline = 'middle';
+            g.fillText(icon, size / 2, size / 2 + 1);
+            return { canvas, ratio };
+        }
+
+        function updateGhostsUi() {
+            ghostsToggle.hidden = !otherDimension(current);
+            ghostsToggle.setAttribute('aria-pressed', String(ghostsOn));
+            updateLayersUi();
+        }
+
+        function attachGhosts() {
+            ghostCtx = null;
+            updateGhostsUi();
+            const other = otherDimension(current);
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!other || !u || !u.olMap || !ol) return;
+            const doc = u.olMap.getTargetElement().ownerDocument;
+            const f = DIMENSIONS[other].scale / DIMENSIONS[current].scale; // other's coords -> this map
+            const toView = (x, z) => ol.proj.transform([x, z], u.dataProjection, u.viewProjection);
+            const unit = blockUnit(u, ol);
+            const features = [];
+
+            // Ghosts of the other dimension's portals and waypoints.
+            const portalLook = typeInfo('nether_portal');
+            for (const q of structuresIn(other).filter(s => s.type === 'nether_portal')) {
+                const feat = new ol.Feature(new ol.geom.Point(toView(q.x * f + 0.5, q.z * f + 0.5)));
+                feat.set('ghost', { kind: 'structure', item: q });
+                features.push(feat);
+            }
+            for (const w of waypointsIn(other)) {
+                const feat = new ol.Feature(new ol.geom.Point(toView(w.x * f + 0.5, w.z * f + 0.5)));
+                feat.set('ghost', { kind: 'waypoint', item: w });
+                features.push(feat);
+            }
+            // Links of this dimension's portals to the ghost of their partner.
+            for (const p of structuresIn(current).filter(s => s.type === 'nether_portal')) {
+                const q = p.link && findStructure(p.link);
+                const from = toView(p.x + 0.5, p.z + 0.5);
+                if (q) {
+                    const feat = new ol.Feature(new ol.geom.LineString([from, toView(q.x * f + 0.5, q.z * f + 0.5)]));
+                    feat.set('link', q.link === p.id ? 'both' : 'oneway');
+                    features.push(feat);
+                } else {
+                    const feat = new ol.Feature(new ol.geom.Point(from));
+                    feat.set('link', 'none');
+                    features.push(feat);
+                }
+            }
+
+            const images = new Map();
+            const ghostStyle = (key, icon, color, square) => {
+                if (!images.has(key)) {
+                    const { canvas, ratio } = ghostImage(doc, icon, color, square);
+                    images.set(key, new ol.style.Style({ image: new ol.style.Icon({ img: canvas, scale: 1 / ratio }), zIndex: 2 }));
+                }
+                return images.get(key);
+            };
+            const labels = new Map();
+            const ghostLabel = text => {
+                if (!labels.has(text)) {
+                    labels.set(text, new ol.style.Style({
+                        text: new ol.style.Text({
+                            text,
+                            font: 'italic 600 11px -apple-system, "Segoe UI", Roboto, sans-serif',
+                            fill: new ol.style.Fill({ color: 'rgba(255, 255, 255, 0.85)' }),
+                            stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.8)', width: 3 }),
+                            offsetY: 20
+                        }),
+                        zIndex: 3
+                    }));
+                }
+                return labels.get(text);
+            };
+            const LINK_STYLES = {
+                both: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#2ecc71', width: 2.5 }), zIndex: 1 }),
+                oneway: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#f39c12', width: 2.5, lineDash: [6, 4] }), zIndex: 1 }),
+                none: new ol.style.Style({
+                    image: new ol.style.Circle({ radius: 15, stroke: new ol.style.Stroke({ color: '#e74c3c', width: 2.5, lineDash: [4, 3] }) }),
+                    zIndex: 1
+                })
+            };
+            const otherLabel = DIMENSIONS[other].label;
+
+            const layer = new ol.layer.Vector({
+                source: new ol.source.Vector({ features }),
+                zIndex: 1450,
+                visible: ghostsOn,
+                style: (feat, resolution) => {
+                    const link = feat.get('link');
+                    if (link) return LINK_STYLES[link];
+                    const g = feat.get('ghost');
+                    const named = unit / resolution >= 1 / 8;
+                    if (g.kind === 'waypoint') {
+                        const style = ghostStyle('w:' + g.item.icon + g.item.color, g.item.icon, g.item.color, true);
+                        return named ? [style, ghostLabel(g.item.name + ' (' + otherLabel + ')')] : style;
+                    }
+                    // No label: it would collide with the real portal's label right
+                    // next to it (well-linked portals sit where their ghost is).
+                    return ghostStyle('portal', portalLook.icon, portalLook.color, false);
+                }
+            });
+            u.olMap.addLayer(layer);
+            ghostCtx = { u, layer };
+        }
+
+        function ghostAt(pixel) {
+            if (!ghostCtx || !ghostCtx.layer.getVisible() || ghostCtx.u !== getUnmined()) return null;
+            return ghostCtx.u.olMap.forEachFeatureAtPixel(pixel, f => f.get('ghost'),
+                { layerFilter: l => l === ghostCtx.layer, hitTolerance: 4 }) || null;
+        }
+
+        // Clicked ghost: show the real thing (in its own dimension's coordinates).
+        function showGhost(g) {
+            if (g.kind === 'waypoint') showWaypoint(g.item); else showInfo(g.item);
+            const title = document.getElementById('info-title');
+            title.textContent += ' (' + DIMENSIONS[g.item.dim].label + ')';
+        }
+
+        function setGhosts(on) {
+            ghostsOn = on;
+            try { localStorage.setItem(GHOSTS_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            if (ghostCtx) ghostCtx.layer.setVisible(on);
+            updateGhostsUi();
+        }
+
+        ghostsToggle.addEventListener('click', () => setGhosts(!ghostsOn));
+
+        // ---- Layers panel and help ------------------------------------------
+        // The layers panel holds the map type (normal / biomes / caves) and the
+        // overlays (other dimension, chunk grid, slime chunks); the buttons there
+        // are the same elements the code above shows, hides and presses. The
+        // badge on the layers button counts what is switched on.
+
+        const layersToggle = document.getElementById('layers-toggle');
+        const layersPanel = document.getElementById('layers');
+        const layersBadge = document.getElementById('layers-badge');
+        const layersNote = document.getElementById('layers-note');
+        const mapNormal = document.getElementById('map-normal');
+        const helpToggle = document.getElementById('help-toggle');
+        const helpPanel = document.getElementById('help');
+
+        function updateLayersUi() {
+            const type = caveMode && hasCaveMap(current) ? 'Cave map'
+                : biomeMode && hasBiomeMap(current) ? 'Biome map' : null;
+            mapNormal.setAttribute('aria-pressed', String(!type));
+            biomesToggle.setAttribute('aria-pressed', String(type === 'Biome map'));
+            cavesToggle.setAttribute('aria-pressed', String(type === 'Cave map'));
+            // Only "Normal" available: say why there is nothing to choose.
+            const choices = !biomesToggle.hidden || !cavesToggle.hidden;
+            layersNote.hidden = choices;
+            layersNote.textContent = 'Biome and cave maps appear here once rendered '
+                + '(map-renderer --biomes / --caves).';
+            const active = [
+                type,
+                ghostsOn && !ghostsToggle.hidden && 'Other dimension',
+                gridOn && 'Chunk grid',
+                slimeOn && !slimeToggle.hidden && 'Slime chunks'
+            ].filter(Boolean);
+            layersBadge.hidden = !active.length;
+            layersBadge.textContent = String(active.length);
+            layersToggle.title = 'Layers' + (active.length ? ': ' + active.join(', ') : '') + ' (key L)';
+        }
+
+        function setLayersPanel(open) {
+            layersPanel.hidden = !open;
+            layersToggle.setAttribute('aria-pressed', String(open));
+            if (open) {
+                setStructuresPanel(false); // the panels share one spot
+                setStatsPanel(false);
+                biomesPanel.hidden = true;
+                updateLayersUi();
+            }
+        }
+
+        function setHelp(open) {
+            helpPanel.hidden = !open;
+            helpToggle.setAttribute('aria-pressed', String(open));
+        }
+
+        layersToggle.addEventListener('click', () => setLayersPanel(layersPanel.hidden));
+        mapNormal.addEventListener('click', () => {
+            if (biomeMode) setBiomeMode(false);
+            if (caveMode) setCaveMode(false);
+            updateLayersUi();
+        });
+        helpToggle.addEventListener('click', () => setHelp(helpPanel.hidden));
+        document.getElementById('help-close').addEventListener('click', () => setHelp(false));
 
         // ---- Waypoints (markers/markers.json) --------------------------------
         // Own places (bases, farms, shops) kept in markers.json, outside the map:
@@ -3303,7 +4019,34 @@
                         color: /^#[0-9a-f]{3,8}$/i.test(w.color || '') ? w.color : '#e74c3c',
                         description: typeof w.description === 'string' ? w.description : ''
                     }));
+                shapes = [
+                    ...readShapes(doc && doc.paths, 'path', 2),
+                    ...readShapes(doc && doc.areas, 'area', 3)
+                ];
             });
+
+        // "paths" (roads, ice highways, rails) and "areas" (towns, claims) in markers.json:
+        //   { "name": "...", "dim": "nether", "points": [[x, z], ...], "color": "#...",
+        //     "width": 4, "dashed": true, "description": "..." }
+        let shapes = [];
+        function readShapes(list, kind, minPoints) {
+            if (!Array.isArray(list)) return [];
+            return list
+                .filter(s => s && typeof s.name === 'string' && Array.isArray(s.points))
+                .map(s => ({ ...s, points: s.points.filter(p => Array.isArray(p) && isFinite(p[0]) && isFinite(p[1])) }))
+                .filter(s => s.points.length >= minPoints)
+                .map((s, i) => ({
+                    id: kind + ':' + i,
+                    kind,
+                    name: s.name,
+                    dim: DIMENSIONS[s.dim] ? s.dim : 'overworld',
+                    points: s.points.map(p => [Number(p[0]), Number(p[1])]),
+                    color: /^#[0-9a-f]{3,8}$/i.test(s.color || '') ? s.color : (kind === 'path' ? '#74b9ff' : '#f6b93b'),
+                    width: isFinite(s.width) ? Math.max(1, Math.min(12, Number(s.width))) : (kind === 'path' ? 4 : 2),
+                    dashed: Boolean(s.dashed),
+                    description: typeof s.description === 'string' ? s.description : ''
+                }));
+        }
 
         const waypointsIn = dim => waypoints.filter(w => w.dim === dim);
 
@@ -3426,6 +4169,445 @@
             const text = '    ' + JSON.stringify(entry).replace(/,"/g, ', "').replace(/":/g, '": ') + ',';
             if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
         }
+
+        // ---- Paths and areas (markers.json) ---------------------------------
+        // Drawn below the waypoints. Paths are labelled along the line, areas
+        // get a light fill and their name in the middle. Clicking a path, an
+        // area's outline or its name opens the info panel (not the inside of
+        // an area, so the map under a big town stays clickable).
+
+        const SHAPES_TYPE = 'shapes'; // key in the structure legend / hiddenTypes
+        let shapeCtx = null;          // { u, ol, layer } of the loaded map
+        const shapesIn = dim => shapes.filter(s => s.dim === dim);
+
+        function shapeLength(points) {
+            let d = 0;
+            for (let i = 1; i < points.length; i++) d += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
+            return d;
+        }
+
+        function shapeArea(points) { // shoelace formula, blocks²
+            let a = 0;
+            for (let i = 0; i < points.length; i++) {
+                const [x1, z1] = points[i], [x2, z2] = points[(i + 1) % points.length];
+                a += x1 * z2 - x2 * z1;
+            }
+            return Math.abs(a) / 2;
+        }
+
+        function shapeCentre(s) {
+            const xs = s.points.map(p => p[0]), zs = s.points.map(p => p[1]);
+            if (s.kind === 'area') return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2];
+            return s.points[Math.floor(s.points.length / 2)]; // a point on the path
+        }
+
+        function rgba(hex, alpha) {
+            let h = hex.slice(1);
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const n = parseInt(h.slice(0, 6), 16);
+            return 'rgba(' + (n >> 16 & 255) + ', ' + (n >> 8 & 255) + ', ' + (n & 255) + ', ' + alpha + ')';
+        }
+
+        function attachShapes() {
+            shapeCtx = null;
+            const list = shapesIn(current);
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!list.length || !u || !u.olMap || !ol) return;
+            const toView = p => ol.proj.transform([p[0] + 0.5, p[1] + 0.5], u.dataProjection, u.viewProjection);
+            const unit = blockUnit(u, ol);
+            const features = list.map(s => {
+                const coords = s.points.map(toView);
+                const geom = s.kind === 'path'
+                    ? new ol.geom.LineString(coords)
+                    : new ol.geom.Polygon([[...coords, coords[0]]]);
+                const f = new ol.Feature(geom);
+                f.set('shape', s);
+                return f;
+            });
+            const styles = new Map();
+            const layer = new ol.layer.Vector({
+                source: new ol.source.Vector({ features }),
+                zIndex: 1540,
+                visible: !hiddenTypes.has(SHAPES_TYPE),
+                style: (f, resolution) => {
+                    const s = f.get('shape');
+                    const selected = s.id === selectedId;
+                    const named = unit / resolution >= 1 / 8;
+                    const key = s.id + (selected ? ':sel' : '') + (named ? ':n' : '');
+                    if (!styles.has(key)) {
+                        const stroke = new ol.style.Stroke({
+                            color: s.color, width: s.width + (selected ? 2 : 0),
+                            lineDash: s.dashed ? [s.width * 3, s.width * 2] : undefined
+                        });
+                        const out = [];
+                        if (s.kind === 'path') {
+                            // Dark casing under the line keeps it readable on any terrain.
+                            out.push(new ol.style.Style({ stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.55)', width: s.width + 3 }) }));
+                        }
+                        out.push(new ol.style.Style({
+                            stroke,
+                            fill: s.kind === 'area' ? new ol.style.Fill({ color: rgba(s.color, selected ? 0.25 : 0.14) }) : undefined
+                        }));
+                        if (named) {
+                            out.push(new ol.style.Style({
+                                text: new ol.style.Text({
+                                    text: s.name,
+                                    placement: s.kind === 'path' ? 'line' : 'point',
+                                    overflow: s.kind === 'area',
+                                    font: '700 12px -apple-system, "Segoe UI", Roboto, sans-serif',
+                                    fill: new ol.style.Fill({ color: '#fff' }),
+                                    stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.85)', width: 3 }),
+                                    offsetY: s.kind === 'path' ? -10 : 0
+                                })
+                            }));
+                        }
+                        styles.set(key, out);
+                    }
+                    return styles.get(key);
+                }
+            });
+            u.olMap.addLayer(layer);
+            shapeCtx = { u, ol, layer };
+        }
+
+        // Path at the pixel, or an area if the pixel is on (near) its outline.
+        function shapeAt(pixel) {
+            if (!shapeCtx || !shapeCtx.layer.getVisible() || shapeCtx.u !== getUnmined()) return null;
+            const { u } = shapeCtx;
+            const coord = u.olMap.getCoordinateFromPixel(pixel);
+            const res = u.olMap.getView().getResolution();
+            let found = null;
+            u.olMap.forEachFeatureAtPixel(pixel, f => {
+                const s = f.get('shape');
+                if (s.kind === 'path') { found = s; return true; }
+                const ring = f.getGeometry().getLinearRing(0);
+                const near = ring.getClosestPoint(coord);
+                if (Math.hypot(near[0] - coord[0], near[1] - coord[1]) / res <= 6) { found = s; return true; }
+                return false;
+            }, { layerFilter: l => l === shapeCtx.layer, hitTolerance: 4 });
+            return found;
+        }
+
+        function showShape(s) {
+            const [cx, cz] = shapeCentre(s);
+            const details = [s.description];
+            if (s.kind === 'path') {
+                const len = shapeLength(s.points);
+                let line = 'Path · ' + fmtBlocks(len);
+                if (DIMENSIONS[s.dim].scale === 8) line += ' (≙ ' + fmtBlocks(len * 8) + ' in the Overworld)';
+                details.push(line);
+            } else {
+                const xs = s.points.map(p => p[0]), zs = s.points.map(p => p[1]);
+                details.push('Area · ' + Math.round(Math.max(...xs) - Math.min(...xs)).toLocaleString() + ' × '
+                    + Math.round(Math.max(...zs) - Math.min(...zs)).toLocaleString() + ' blocks, '
+                    + Math.round(shapeArea(s.points)).toLocaleString() + ' blocks²');
+            }
+            showPlaceInfo({
+                title: s.name, icon: s.kind === 'path' ? '〰️' : '⬠', color: s.color,
+                x: Math.round(cx), z: Math.round(cz), details: details.filter(Boolean), waypoint: false
+            });
+            selectedId = s.id;
+            if (shapeCtx) shapeCtx.layer.changed();
+        }
+
+        function goToShape(s) {
+            setSearchPanel(false, { keepSession: true });
+            const [x, z] = shapeCentre(s);
+            if (s.dim === current) {
+                const u = getUnmined();
+                if (u) u.center([x, z]);
+                showShape(s);
+            } else {
+                pendingShape = s;
+                select(s.dim, { view: { x, z } });
+            }
+        }
+        let pendingShape = null;
+
+        // ---- Cursor info -----------------------------------------------------
+        // One line at the bottom: X · Y · Z · biome · chunk · slime chunk for
+        // the block under the mouse (or where you tap). Y and the biome need the
+        // biome data (map-renderer --biomes, Bedrock); Y is the top block of the
+        // 4 x 4 cell, so it can include trees and roofs.
+
+        const CURSOR_KEY = 'map-renderer.cursor-info';
+        const cursorToggle = document.getElementById('cursor-toggle');
+        const cursorInfo = document.getElementById('cursor-info');
+        const heightRegions = new Map(); // "dim:rx:rz" -> Promise<Uint8Array|null>
+        let cursorOn = true;
+        try { cursorOn = localStorage.getItem(CURSOR_KEY) !== '0'; } catch (e) { /* ignore */ }
+        let cursorToken = 0;
+
+        const lookupReady = dim => Boolean(biomeDoc && biomeDoc.lookup && biomeDoc.lookup[dim]
+            && typeof DecompressionStream === 'function');
+
+        function heightRegion(dim, rx, rz) {
+            const key = dim + ':' + rx + ':' + rz;
+            if (!heightRegions.has(key)) {
+                heightRegions.set(key, biomeIndex(dim).then(index =>
+                    (index && index.heights && index.regions.has(rx + ':' + rz)
+                        ? fetchInflated(lookupUrl(dim, 'h.' + rx + '.' + rz + '.bin'))
+                        : null)));
+            }
+            return heightRegions.get(key);
+        }
+
+        async function heightAt(dim, x, z) {
+            const size = biomeDoc.lookupRegion || 512, cell = biomeDoc.lookupCell || 4, per = size / cell;
+            const rx = Math.floor(x / size), rz = Math.floor(z / size);
+            const data = await heightRegion(dim, rx, rz);
+            if (!data) return null;
+            const i = Math.floor((z - rz * size) / cell) * per + Math.floor((x - rx * size) / cell);
+            const v = data[i] | (data[per * per + i] << 8);
+            return v ? v - 65 : null;
+        }
+
+        async function showCursorInfo(u, ol, pixel) {
+            const token = ++cursorToken;
+            if (!cursorOn) return;
+            const b = ol.proj.transform(u.olMap.getCoordinateFromPixel(pixel), u.viewProjection, u.dataProjection);
+            // || 0 turns -0 (the projection flips z) into 0, so it never shows as "-0".
+            const x = Math.floor(b[0]) || 0, z = Math.floor(b[1]) || 0;
+            const dim = current;
+            const cx = Math.floor(x / 16), cz = Math.floor(z / 16);
+            const lookup = lookupReady(dim);
+            const [y, biome] = await Promise.all([
+                lookup ? heightAt(dim, x, z).catch(() => null) : null,
+                lookup ? biomeAt(dim, x, z).catch(() => null) : null
+            ]);
+            if (token !== cursorToken || !cursorOn) return;
+            const parts = [
+                'X ' + x.toLocaleString(),
+                y !== null && y !== undefined ? 'Y ≈ ' + y.toLocaleString() : null,
+                'Z ' + z.toLocaleString(),
+                biome ? biome.name : null,
+                'Chunk ' + cx + ', ' + cz,
+                dim === 'overworld' && isBedrock() && isSlimeChunk(cx, cz) ? 'Slime chunk' : null
+            ].filter(Boolean);
+            cursorInfo.replaceChildren(...parts.map((text, i) => {
+                const span = document.createElement('span');
+                span.textContent = text;
+                if (text === 'Slime chunk') span.className = 'slime';
+                if (biome && text === biome.name) {
+                    span.className = 'biome';
+                    span.style.setProperty('--biome-color', biome.color);
+                }
+                return span;
+            }));
+            cursorInfo.hidden = false;
+        }
+
+        function hideCursorInfo() {
+            cursorToken++;
+            cursorInfo.hidden = true;
+        }
+
+        function attachCursorInfo() {
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            const view = frame.contentWindow;
+            let pending = null;
+            u.olMap.on('pointermove', e => {
+                if (e.dragging || !cursorOn) return;
+                if (pending === null) {
+                    view.requestAnimationFrame(() => {
+                        const pixel = pending;
+                        pending = null;
+                        showCursorInfo(u, ol, pixel);
+                    });
+                }
+                pending = e.pixel;
+            });
+            u.olMap.on('singleclick', e => showCursorInfo(u, ol, e.pixel)); // touch screens
+            u.olMap.getViewport().addEventListener('mouseleave', hideCursorInfo);
+        }
+
+        function setCursorInfo(on) {
+            cursorOn = on;
+            try { localStorage.setItem(CURSOR_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            cursorToggle.setAttribute('aria-pressed', String(on));
+            if (!on) hideCursorInfo();
+            updateLayersUi();
+        }
+
+        cursorToggle.setAttribute('aria-pressed', String(cursorOn));
+        cursorToggle.addEventListener('click', () => setCursorInfo(!cursorOn));
+
+        // ---- Right-click menu ------------------------------------------------
+        // Replaces uNmINeD's menu (removed in tidyUnminedUi): copy coordinates,
+        // /tp or a waypoint line, act on the spot (pin, farm radius, search from
+        // here, same spot in the other dimension) and quick layer switches.
+        // Opens on right-click, or a long press on touch screens.
+
+        const ctxMenu = document.getElementById('ctx-menu');
+        let ctxToken = 0;
+
+        function closeMapMenu() {
+            ctxToken++;
+            ctxMenu.hidden = true;
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+        }
+
+        async function openMapMenu(u, ol, pixel, clientX, clientY) {
+            const token = ++ctxToken;
+            const b = ol.proj.transform(u.olMap.getCoordinateFromPixel(pixel), u.viewProjection, u.dataProjection);
+            const x = Math.floor(b[0]) || 0, z = Math.floor(b[1]) || 0;
+            const dim = current;
+            const spot = { x, z, y: undefined };
+            const other = otherDimension(dim);
+
+            const head = document.createElement('div');
+            head.className = 'ctx-head';
+            const fillHead = (y, biome) => {
+                head.replaceChildren();
+                const coords = document.createElement('b');
+                coords.textContent = 'X ' + x.toLocaleString() + (y !== undefined ? ' · Y ≈ ' + y.toLocaleString() : '')
+                    + ' · Z ' + z.toLocaleString();
+                const line = document.createElement('div');
+                line.textContent = DIMENSIONS[dim].label + ' · chunk ' + Math.floor(x / 16) + ', ' + Math.floor(z / 16);
+                if (biome) {
+                    const swatch = document.createElement('span');
+                    swatch.className = 'swatch';
+                    swatch.style.setProperty('--biome-color', biome.color);
+                    line.append(' · ', swatch, biome.name);
+                }
+                head.append(coords, line);
+            };
+            fillHead(undefined, null);
+
+            const entries = [
+                { label: 'Copy coordinates', hint: () => x + ' ' + (spot.y ?? '~') + ' ' + z,
+                  run: () => copyText(x + ' ' + (spot.y ?? '~') + ' ' + z) },
+                { label: 'Copy /tp command', run: () => copyText('/tp @s ' + x + ' ' + (spot.y ?? '~') + ' ' + z) },
+                { label: 'Copy as waypoint', run: () => copyWaypoint({ title: 'New place', x, y: spot.y, z }, dim) },
+                '-',
+                { label: 'Mark this spot', run: () => {
+                    showPin(x, z);
+                    showPlaceInfo({ title: 'Marked spot', icon: '⌖', x, y: spot.y, z });
+                } },
+                { label: 'Farm radius around here', kbd: 'R', run: () => {
+                    setPlaced('radius', dim, { x, z });
+                    setRadius(true);
+                } },
+                { label: 'Find nearest from here…', kbd: 'F', run: () => {
+                    searchReturn = null;
+                    searchFrom = { dim, x, z };
+                    setSearchPanel(true);
+                } }
+            ];
+            if (other) {
+                const f = DIMENSIONS[dim].scale / DIMENSIONS[other].scale;
+                const ox = Math.floor(x * f) || 0, oz = Math.floor(z * f) || 0;
+                entries.push({
+                    label: 'Same spot in the ' + DIMENSIONS[other].label, hint: () => ox + ', ' + oz,
+                    run: () => jumpTo(other, ox, oz, {
+                        title: 'Same spot', icon: '⌖',
+                        details: [x + ', ' + z + ' in the ' + DIMENSIONS[dim].label + (f < 1 ? ' ÷ 8' : ' × 8')]
+                    })
+                });
+            }
+            entries.push('-');
+            entries.push({ label: 'Chunk grid', kbd: 'G', checked: gridOn, run: () => setGrid(!gridOn) });
+            if (!slimeToggle.hidden) entries.push({ label: 'Slime chunks', kbd: 'K', checked: slimeOn, run: () => setSlime(!slimeOn) });
+            if (!ghostsToggle.hidden) entries.push({ label: 'Other dimension', kbd: 'O', checked: ghostsOn, run: () => setGhosts(!ghostsOn) });
+            entries.push({ label: 'Cursor info', checked: cursorOn, run: () => setCursorInfo(!cursorOn) });
+            const scaleShown = !!u.olMap.getTargetElement().ownerDocument.querySelector('.ol-scale-bar, .ol-scale-line');
+            if (typeof u.toggleScaleBar === 'function') {
+                entries.push({ label: 'Scale bar', checked: scaleShown, run: () => u.toggleScaleBar() });
+            }
+
+            const hints = [];
+            const nodes = entries.map(entry => {
+                if (entry === '-') {
+                    const sep = document.createElement('div');
+                    sep.className = 'ctx-sep';
+                    return sep;
+                }
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.setAttribute('role', entry.checked === undefined ? 'menuitem' : 'menuitemcheckbox');
+                if (entry.checked !== undefined) btn.setAttribute('aria-checked', String(entry.checked));
+                const check = document.createElement('span');
+                check.className = 'check';
+                check.textContent = entry.checked ? '✓' : '';
+                const label = document.createElement('span');
+                label.textContent = entry.label;
+                const right = document.createElement('span');
+                if (entry.kbd) {
+                    const k = document.createElement('kbd');
+                    k.textContent = entry.kbd;
+                    right.append(k);
+                } else if (entry.hint) {
+                    right.className = 'hint';
+                    right.textContent = entry.hint();
+                    hints.push([right, entry.hint]);
+                }
+                btn.append(check, label, right);
+                btn.addEventListener('click', () => {
+                    closeMapMenu();
+                    entry.run();
+                });
+                return btn;
+            });
+            ctxMenu.replaceChildren(head, ...nodes);
+
+            // Place at the pointer, kept inside the window.
+            ctxMenu.hidden = false;
+            const rect = frame.getBoundingClientRect();
+            const left = Math.min(rect.left + clientX, window.innerWidth - ctxMenu.offsetWidth - 8);
+            const top = Math.min(rect.top + clientY, window.innerHeight - ctxMenu.offsetHeight - 8);
+            ctxMenu.style.left = Math.max(8, left) + 'px';
+            ctxMenu.style.top = Math.max(8, top) + 'px';
+            const first = ctxMenu.querySelector('button');
+            if (first) first.focus({ preventScroll: true });
+
+            // Height and biome (from the biome data) arrive a moment later.
+            if (lookupReady(dim)) {
+                const [y, biome] = await Promise.all([
+                    heightAt(dim, x, z).catch(() => null),
+                    biomeAt(dim, x, z).catch(() => null)
+                ]);
+                if (token !== ctxToken) return;
+                if (y !== null && y !== undefined) spot.y = y;
+                fillHead(spot.y, biome);
+                for (const [el, hint] of hints) el.textContent = hint();
+            }
+        }
+
+        function attachMapMenu() {
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            const viewport = u.olMap.getViewport();
+            viewport.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                openMapMenu(u, ol, u.olMap.getEventPixel(e), e.clientX, e.clientY);
+            });
+            // Clicks and drags on the map, zooming and panning close it.
+            viewport.addEventListener('pointerdown', e => { if (e.button !== 2) closeMapMenu(); });
+            u.olMap.on('movestart', closeMapMenu);
+        }
+
+        // Clicks elsewhere on the page close it too (the map is in the iframe).
+        document.addEventListener('pointerdown', e => {
+            if (!ctxMenu.hidden && !ctxMenu.contains(e.target)) closeMapMenu();
+        });
+        ctxMenu.addEventListener('keydown', e => {
+            const buttons = [...ctxMenu.querySelectorAll('button')];
+            const at = buttons.indexOf(document.activeElement);
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                buttons[(at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus();
+            } else if (e.key === 'Escape') {
+                closeMapMenu();
+            }
+            e.stopPropagation(); // keys in the menu are not map shortcuts
+        });
 
         // ---- Statistics ----------------------------------------------
         // map/stats.json is written by map-renderer from uNmINeD's render log.
@@ -3581,6 +4763,7 @@
             if (open) {
                 setStructuresPanel(false);
                 biomesPanel.hidden = true;
+                setLayersPanel(false);
                 statsDim = current;
                 renderStats();
             }
@@ -3597,6 +4780,7 @@
 
         frame.addEventListener('load', () => {
             upgradeZoom();
+            tidyUnminedUi();
             if (pendingView) {
                 applyView(pendingView);
                 pendingView = null;
@@ -3626,8 +4810,17 @@
             renderMeasure(measureCtx ? measureCtx.saved : null);
             attachRadius();
             attachGrid();
+            shapeCtx = null;
+            attachCursorInfo();
+            closeMapMenu();
+            attachMapMenu();
             attachBiomeHover();
             const loadedWindow = frame.contentWindow;
+            ghostCtx = null;
+            updateGhostsUi();
+            Promise.all([structuresLoaded, waypointsLoaded]).then(() => {
+                if (frame.contentWindow === loadedWindow) attachGhosts();
+            });
             waypointCtx = null;
             waypointsLoaded.then(() => {
                 if (frame.contentWindow !== loadedWindow) return;
@@ -3636,6 +4829,11 @@
                 if (pendingWaypoint) {
                     showWaypoint(pendingWaypoint);
                     pendingWaypoint = null;
+                }
+                attachShapes();
+                if (pendingShape) {
+                    showShape(pendingShape);
+                    pendingShape = null;
                 }
             });
             slimeLayer = null;
@@ -3670,6 +4868,14 @@
             const map = { '1': 'overworld', '2': 'nether', '3': 'end' };
             if (map[e.key]) {
                 select(map[e.key]);
+            } else if (e.key === '?') {
+                setHelp(helpPanel.hidden);
+            } else if (e.key === 'Escape' && !ctxMenu.hidden) {
+                closeMapMenu();
+            } else if (e.key === 'Escape' && !helpPanel.hidden) {
+                setHelp(false);
+            } else if (e.key === 'l' || e.key === 'L') {
+                setLayersPanel(layersPanel.hidden);
             } else if (e.key === 'm' || e.key === 'M') {
                 setMeasure(!measureActive);
             } else if (e.key === 's' || e.key === 'S') {
@@ -3680,6 +4886,8 @@
                 toggleBiomes();
             } else if (e.key === 'g' || e.key === 'G') {
                 setGrid(!gridOn);
+            } else if ((e.key === 'o' || e.key === 'O') && !ghostsToggle.hidden) {
+                setGhosts(!ghostsOn);
             } else if ((e.key === 'k' || e.key === 'K') && !slimeToggle.hidden) {
                 setSlime(!slimeOn);
             } else if ((e.key === 'c' || e.key === 'C') && !cavesToggle.hidden) {
@@ -3698,6 +4906,8 @@
             } else if (e.key === 'Escape' && measureActive) {
                 if (measureDrawing && measureCtx) measureCtx.draw.abortDrawing();
                 else setMeasure(false);
+            } else if (e.key === 'Escape' && !layersPanel.hidden) {
+                setLayersPanel(false);
             } else if (e.key === 'Backspace' && measureDrawing && measureCtx) {
                 e.preventDefault();
                 measureCtx.draw.removeLastPoint();

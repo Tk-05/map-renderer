@@ -128,7 +128,7 @@ map-renderer build --world "SMP" --biomes -y
 
 This renders the Overworld and the Nether a second time, colored by biome, into
 `map/overworld-biomes/` and `map/nether-biomes/`, and writes the legend to
-`map/biomes.json`. On the web page, the leaf button (or key `B`) switches to the biome
+`map/biomes.json`. On the web page, **Layers → Biomes** (or key `B`) switches to the biome
 map at the same position and shows the legend. The legend can be collapsed with the
 arrow next to its title. Render time and disk space for these two dimensions roughly
 double. The End has a single biome and gets no biome map.
@@ -138,7 +138,8 @@ straight from the world (about a minute for a large world) and writes them to
 `map/biomedata/` (a few MB, one small file per region, in 4×4-block cells). The page
 then shows the biome under the mouse pointer, or where you tap on a touch screen, and
 the legend lists only the biomes that occur, with their share of the explored area.
-Near biome borders the name can be off by a few blocks.
+Near biome borders the name can be off by a few blocks. For the Overworld it also
+stores the surface height, used by the cursor info.
 
 To **find a biome**, untick biomes in the legend (or click **Hide all** and tick only
 the ones you are looking for; a group checkbox switches a whole group such as all
@@ -154,7 +155,7 @@ map-renderer build --world "SMP" --caves -y
 This renders the Overworld a second time with everything above y = −45 left out, into
 `map/overworld-caves/`: a cut through the underground that shows caves, ancient cities
 (around y = −51) and the deep dark. Choose another height with `--cave-top Y`. On the
-web page, the cave button (or key `C`) switches to it at the same position; the biome
+web page, **Layers → Caves** (or key `C`) switches to it at the same position; the biome
 map and the cave map are alternatives, so switching one on switches the other off.
 It roughly doubles the Overworld's render time and disk space. Chunks last saved before
 Minecraft 1.18 have no blocks below y = 0 and stay black.
@@ -466,9 +467,34 @@ map.example.com {
 
 ## Using the web map
 
+The tool bar on the right is grouped: **Search** · **Layers**, **Structures**,
+**Statistics** · **Farm radius**, **Measure** · **Help**. **Layers** holds the map type
+(normal, biome map, cave map) and the overlays (other dimension, chunk grid, slime
+chunks); the number on its button says how many are switched on. **Help** (`?`) lists
+every shortcut and the colours used on the map.
+
+**Cursor info**: a line at the bottom shows the block under the mouse (or where you
+tap): `X · Y · Z · biome · chunk · slime chunk`. Y and the biome come from the biome
+data (Bedrock, rendered with `--biomes`); Y is the highest block of the 4 × 4 cell, so
+trees and roofs count, and it is only shown for the Overworld (the Nether's height map
+is its bedrock roof). Switch it off under **Layers → Cursor info**.
+
+uNmINeD's own coordinate box, zoom buttons and coordinate grid are removed from the
+map; the cursor info and the chunk grid replace them. Zoom with the mouse wheel or by
+pinching. The scale bar stays.
+
+**Right-click menu** (or a long press on touch screens), in the same style as the rest
+of the page. Its header shows the spot (X · Y · Z, chunk, biome). It can copy the
+coordinates, a `/tp` command or a `markers.json` line, mark the spot, put the farm
+radius there, search for the nearest structure or biome from there, jump to the same
+spot in the other dimension (÷ 8 / × 8), and switch the chunk grid, slime chunks,
+other dimension, cursor info and scale bar. Arrow keys move through it, `Esc` closes it.
+
 | Key             | Action                                                                                    |
 | --------------- | ----------------------------------------------------------------------------------------- |
 | `1` / `2` / `3` | Overworld / Nether / End                                                                  |
+| `L`             | Layers: map type (normal, biomes, caves) and overlays (grid, slime chunks, other dimension) |
+| `?`             | All keyboard shortcuts and what the colours mean                                          |
 | `F` or `/`      | Search: coordinates, structures, biomes, waypoints (see below)                            |
 | `K`             | Slime chunks (Bedrock, Overworld; zoom in to see them)                                    |
 | `C`             | Cave map of the Overworld (only shown if rendered with `--caves`)                         |
@@ -478,6 +504,7 @@ map.example.com {
 | `M`             | Measure distance. `Backspace` removes the last point, `Esc` cancels.                      |
 | `R`             | Farm radius: spawn and despawn circles around a point (see below)                         |
 | `G`             | Chunk and region grid                                                                     |
+| `O`             | Other dimension: portals and waypoints of the Nether / Overworld (1:8) and portal links   |
 | `Esc`           | Close the info panel                                                                      |
 
 **Search** (magnifier button, `F` or `/`) measures from the map centre, marked with a
@@ -520,17 +547,34 @@ farm. All distances are spherical, so the circles hold at the centre's height an
 area shrinks above and below it. **Copy /tp** copies a teleport to the centre. The
 chosen circles are remembered in the browser.
 
-**Chunk and region grid** (grid button, `G`): close up, chunk borders (16 blocks) with
+**Chunk and region grid** (Layers → Chunk grid, `G`): close up, chunk borders (16 blocks) with
 the chunk coordinates in each chunk, and when zoomed in further also the block
 coordinates of its corner; further out, region borders (512 blocks = 32 × 32 chunks)
 in yellow with region coordinates. It lines up with slime chunks and the spawn diamond
 of the farm radius, works in every dimension and map, and is remembered in the browser.
 
+**Other dimension and portal links** (Layers → Other dimension, `O`; Overworld and
+Nether): the other dimension's nether portals and waypoints appear as translucent,
+dashed "ghosts" where they land on this map (Nether × 8 on the Overworld, Overworld ÷ 8
+on the Nether), so you see right away where a portal comes out. Each portal gets a line
+to the ghost of the portal it links to:
+
+| Line | Meaning |
+| --- | --- |
+| green | the link works both ways |
+| orange, dashed | one-way: going back, you arrive at a different portal |
+| red ring | no portal on the other side: the game would build a new one |
+
+Clicking a ghost shows the real portal or waypoint with its own coordinates. A
+portal's info also says where the way back leads. The links are predicted from the
+scanned portals (`map-renderer scan`), using the 1:8 rule and the search radius of the
+target dimension.
+
 **Placed things are kept:** the radius centre and the last measured line are saved in
 your browser, per dimension, and are back when you open the tool again, also after a
 reload. **Clear** removes them. They are not shared with other visitors.
 
-**Slime chunks** (slime button, `K`): in Bedrock, slime chunks depend only on the chunk
+**Slime chunks** (Layers → Slime chunks, `K`): in Bedrock, slime chunks depend only on the chunk
 coordinates, not on the seed, so the map can show them exactly without revealing the
 seed. Shown in green (outlined when zoomed in) on the Overworld of Bedrock worlds.
 
@@ -566,6 +610,34 @@ or description; with an empty search they come first).
 
 To create an entry, open a place (a structure, or coordinates from the search) and
 click **Copy waypoint**: a ready line for `markers.json` is copied to the clipboard.
+
+**Paths and areas** go into the same file, next to `markers`: roads, ice highways and
+rails as `paths`, towns and claims as `areas`. Points are `[x, z]` block coordinates
+(an area is closed automatically):
+
+```json
+{
+  "markers": [ … ],
+  "paths": [
+    { "name": "Main road", "points": [[120, -340], [200, -260], [260, -180]],
+      "color": "#f5f6fa", "width": 5, "description": "Base to iron farm" },
+    { "name": "Ice highway north", "dim": "nether", "points": [[10, -20], [10, -300]],
+      "color": "#74b9ff", "dashed": true }
+  ],
+  "areas": [
+    { "name": "Spawn town", "points": [[-40, -160], [90, -160], [90, -40], [-40, -40]],
+      "color": "#f6b93b", "description": "Shared town" }
+  ]
+}
+```
+
+`name` and `points` are required (a path needs 2 points, an area 3); `dim`, `color`,
+`width` (1–12), `dashed` and `description` are optional. Paths show their name along
+the line, areas a light fill and their name. Clicking a path, or an area's outline or
+name, shows its length or size; the inside of an area stays clickable for the map.
+They can be switched off in the structure list (**Paths & areas**) and are found by the
+search. The easiest way to get the points: draw the route with the **Measure** tool
+(`M`) and click **Copy as path** or **Copy as area**.
 
 Clicking a structure shows its coordinates. **Copy /tp** copies the matching teleport
 command. Switching between the Overworld and the Nether keeps your position

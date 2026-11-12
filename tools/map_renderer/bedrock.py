@@ -229,6 +229,21 @@ def _surface_2d(value: bytes) -> bytes:
     return bytes(value[512 + z * 16 + x] for x, z in _COLUMNS)
 
 
+def _surface_heights(value: bytes, tag: int, min_y: int) -> bytes:
+    """Height of the top block for each sampled column, as 16 little-endian
+    uint16: y + 65 (so 0 means unknown). Both formats store "first free block
+    above the top": Data3D relative to the bottom of the world, the older
+    Data2D as absolute y (checked on a real world: Data3D values cluster
+    around 128 = y 64, Data2D values around 64)."""
+    heights = struct.unpack_from("<256h", value, 0)
+    base = min_y if tag == TAG_DATA3D else 0
+    out = []
+    for x, z in _COLUMNS:
+        h = heights[z * 16 + x]
+        out.append(0 if h <= 0 else max(1, min(65535, h - 1 + base + 65)))
+    return struct.pack("<16H", *out)
+
+
 def _chunk_key(key: bytes) -> tuple[int, int, int, int] | None:
     """(dimension, x, z, tag) for a biome record key, else None."""
     if len(key) == 9 and key[8] in (TAG_DATA3D, TAG_DATA2D):
@@ -240,20 +255,25 @@ def _chunk_key(key: bytes) -> tuple[int, int, int, int] | None:
     return None
 
 
-def surface_biomes(world: Path, dims: list[str],
-                   top_y: dict[str, int] | None = None) -> dict[str, dict[tuple[int, int], bytes]]:
-    """Surface biome ids per chunk: {dim: {(chunk x, chunk z): 16 bytes}}.
+def surface_biomes(world: Path, dims: list[str], top_y: dict[str, int] | None = None,
+                   height_dims: frozenset[str] = frozenset()
+                   ) -> tuple[dict[str, dict[tuple[int, int], bytes]], dict[str, dict[tuple[int, int], bytes]]]:
+    """Surface biome ids and heights per chunk.
 
-    The 16 bytes are the cells of the chunk row by row (z, then x); 255 = unknown.
+    Returns ({dim: {(chunk x, chunk z): 16 bytes}}, {dim: {(chunk x, chunk z): 32 bytes}}).
+    The 16 bytes are the biome cells of the chunk row by row (z, then x);
+    255 = unknown. Heights (see _surface_heights) only for `height_dims`.
     `top_y` limits the height per dimension (absolute y), like uNmINeD's --topY.
     """
     tops = {DIMENSION_IDS[d]: y - MIN_Y[d] for d, y in (top_y or {}).items() if d in MIN_Y}
+    min_ys = {DIMENSION_IDS[d]: MIN_Y[d] for d in MIN_Y}
+    with_heights = {DIMENSION_IDS[d] for d in height_dims}
     db = world / "db"
     if not db.is_dir():
         raise BedrockError(f"{world} is not a Bedrock world (db/ missing).")
     wanted = {DIMENSION_IDS[d] for d in dims}
-    # (dim, x, z) -> (prefer Data3D, sequence, cells or None for deleted)
-    latest: dict[tuple[int, int, int], tuple[bool, int, bytes | None]] = {}
+    # (dim, x, z) -> (prefer Data3D, sequence, cells or None for deleted, heights or None)
+    latest: dict[tuple[int, int, int], tuple] = {}
 
     def take(key: bytes, seq: int, kind: int, buf: bytes, vpos: int, vlen: int) -> None:
         ck = _chunk_key(key)
@@ -265,14 +285,15 @@ def surface_biomes(world: Path, dims: list[str],
         if old is not None and (old[0], old[1]) >= rank:
             return
         if kind != 1:
-            latest[(dim, x, z)] = (*rank, None)
+            latest[(dim, x, z)] = (*rank, None, None)
             return
         value = buf[vpos:vpos + vlen]
         try:
             cells = _surface_3d(value, tops.get(dim)) if tag == TAG_DATA3D else _surface_2d(value)
+            heights = _surface_heights(value, tag, min_ys.get(dim, 0)) if dim in with_heights else None
         except (struct.error, IndexError, ValueError):
             return  # damaged record: leave the chunk without data
-        latest[(dim, x, z)] = (*rank, cells)
+        latest[(dim, x, z)] = (*rank, cells, heights)
 
     chunk_key_lengths = frozenset((9, 13))
     for path in sorted(db.glob("*.ldb")):
@@ -284,7 +305,10 @@ def surface_biomes(world: Path, dims: list[str],
 
     by_id = {v: k for k, v in DIMENSION_IDS.items()}
     result: dict[str, dict[tuple[int, int], bytes]] = {d: {} for d in dims}
-    for (dim, x, z), (_, _, cells) in latest.items():
+    height_result: dict[str, dict[tuple[int, int], bytes]] = {d: {} for d in dims if d in height_dims}
+    for (dim, x, z), (_, _, cells, heights) in latest.items():
         if cells is not None:
             result[by_id[dim]][(x, z)] = cells
-    return result
+        if heights is not None:
+            height_result[by_id[dim]][(x, z)] = heights
+    return result, height_result
