@@ -2,7 +2,8 @@
 
 A web map for Minecraft worlds (Bedrock and Java). Browse the Overworld, Nether and
 End in the browser, with a list of all structures found (portals, villages,
-strongholds, ancient cities, …), world statistics, and a distance measuring tool.
+strongholds, ancient cities, …), an optional biome map, world statistics, and a
+distance measuring tool.
 
 Rendering is done by [uNmINeD](https://unmined.net). The world can come from a local
 save or be downloaded automatically from a **Bedrock Realm**. A small nginx container
@@ -118,6 +119,31 @@ Then open <http://localhost:8765> in your browser.
 
 **How long does it take?** The first run renders everything. After that, only changed
 areas are redrawn by default. `--force` re-renders everything.
+
+**Biome map.** Answer "Also render biome maps?" with yes, or pass `--biomes`:
+
+```bash
+map-renderer build --world "SMP" --biomes -y
+```
+
+This renders the Overworld and the Nether a second time, colored by biome, into
+`map/overworld-biomes/` and `map/nether-biomes/`, and writes the legend to
+`map/biomes.json`. On the web page, the leaf button (or key `B`) switches to the biome
+map at the same position and shows the legend. The legend can be collapsed with the
+arrow next to its title. Render time and disk space for these two dimensions roughly
+double. The End has a single biome and gets no biome map.
+
+For **Bedrock worlds** (including Realms), the tool also reads the surface biomes
+straight from the world (about a minute for a large world) and writes them to
+`map/biomedata/` (a few MB, one small file per region, in 4×4-block cells). The page
+then shows the biome under the mouse pointer, or where you tap on a touch screen, and
+the legend lists only the biomes that occur, with their share of the explored area.
+Near biome borders the name can be off by a few blocks.
+
+To **find a biome**, untick biomes in the legend (or click **Hide all** and tick only
+the ones you are looking for; a group checkbox switches a whole group such as all
+oceans). Hidden biomes are dimmed on the map, so the selected ones stand out, at any
+zoom level. The selection is remembered in the browser.
 
 ---
 
@@ -398,6 +424,9 @@ docker compose run --rm renderer map-renderer build --realm "My Realm" --force -
 # Overworld only, including spawners etc.
 #   in .env:  BUILD_ARGS=--dims overworld --extras
 
+# Also render biome maps
+#   in .env:  BUILD_ARGS=--biomes
+
 # Sign out / switch account
 docker compose run --rm renderer map-renderer realm logout
 
@@ -425,6 +454,7 @@ map.example.com {
 | `1` / `2` / `3` | Overworld / Nether / End                                                                  |
 | `S`             | Toggle the structure list (portals, villages, strongholds, ancient cities, end cities, …) |
 | `I`             | Statistics (world size, chunks, regions, last render)                                     |
+| `B`             | Biome map with legend (only shown if rendered with `--biomes`); press again to switch off. Hover or tap shows the biome (Bedrock) |
 | `M`             | Measure distance. `Backspace` removes the last point, `Esc` cancels.                      |
 | `Esc`           | Close the info panel                                                                      |
 
@@ -463,6 +493,8 @@ On Windows the command is `map-renderer.bat …`, on Linux/macOS `./map-renderer
 | `-y`, `--yes`              | no questions, use defaults (for scripts)                                                        |
 | `--ignore-running`         | render even while Minecraft is running                                                          |
 | `--force`                  | re-render everything instead of only what changed (`build`/`render` only)                       |
+| `--biomes`                 | also render biome maps of the Overworld and Nether (`build`/`render` only)                      |
+| `--nether-top Y`           | render the Nether from height Y down, below its bedrock roof (default 100; `0` = from the top)  |
 | `--zoomin N`               | zoom-in levels with real tiles, 0–3 (each level needs about 4× the disk space)                  |
 | `--zoomout N`              | zoom-out levels (default 6)                                                                     |
 | `--extras`                 | also list very common finds: spawners, mineshafts, geodes, nether fossils (`build`/`scan` only) |
@@ -530,6 +562,11 @@ run finished (`docker compose logs -f renderer`)?
 
 **"Minecraft is running"**
 Close Minecraft so the world is fully saved, or pass `--ignore-running`.
+
+**The Nether is only grey**
+That is the bedrock roof seen from above. The Nether is rendered from y = 100 down by
+default (`--nether-top`). A map rendered before that setting existed must be redrawn
+completely: `map-renderer render --dims nether --force`.
 
 **Tiles are missing or the map stays grey**
 Check the read permissions (`chmod -R a+rX …`) and the render log in

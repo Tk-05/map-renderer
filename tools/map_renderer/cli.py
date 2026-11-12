@@ -21,17 +21,22 @@ import os
 import shlex
 import sys
 import time
+import zlib
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import __version__, prompts, realms, scan, stats, unmined
+from . import __version__, bedrock, biomes, prompts, realms, scan, stats, unmined
 from .prompts import Aborted, Option, bold, cyan, dim
 from .realms import Realm, RealmError
 from .worlds import World, find_worlds, minecraft_running, resolve_world
 
 DIMENSIONS = ("overworld", "nether", "end")
 DIM_LABELS = {"overworld": "Overworld", "nether": "Nether", "end": "The End"}
+
+# The Nether is rendered from this height down: from above, uNmINeD would
+# only show the bedrock roof (y 123-127), i.e. a grey map.
+NETHER_TOP_Y = 100
 
 
 class CliError(Exception):
@@ -62,6 +67,10 @@ class Project:
     @property
     def stats_file(self) -> Path:
         return self.map_dir / "stats.json"
+
+    @property
+    def biomes_file(self) -> Path:
+        return self.map_dir / "biomes.json"
 
     def render_log(self, dim: str) -> Path:
         return self.cache_dir / "logs" / f"render-{dim}.log"
@@ -115,10 +124,29 @@ class Plan:
     realm: Realm | None = None
     slot: int | None = None    # Realm world slot; None = the active one
     force: bool = False
+    biomes: bool = False       # also render biome maps (overworld, nether)
+    nether_top: int = NETHER_TOP_Y  # Nether rendered below this y (its roof is bedrock); 0 = off
     extras: bool = False
     zoomin: int = 0
     zoomout: int = 6
     extra: list[str] = field(default_factory=list)
+
+    def top_y(self, dim: str) -> int | None:
+        """The --topY a dimension is rendered with: own `-- --topY=..` first, else the Nether default."""
+        for arg in reversed(self.extra):
+            if arg.lower().startswith("--topy="):
+                try:
+                    return int(arg.split("=", 1)[1])
+                except ValueError:
+                    return None
+        return self.nether_top if dim == "nether" and self.nether_top else None
+
+    def render_args(self, dim: str) -> list[str]:
+        """Extra uNmINeD arguments for one dimension."""
+        has_own = any(a.lower().startswith("--topy") for a in self.extra)
+        if dim == "nether" and self.nether_top and not has_own:
+            return [f"--topY={self.nether_top}", *self.extra]
+        return list(self.extra)
 
     @property
     def command(self) -> str:
@@ -139,6 +167,10 @@ class Plan:
         if self.render:
             if self.force:
                 parts.append("--force")
+            if self.biomes:
+                parts.append("--biomes")
+            if self.nether_top != NETHER_TOP_Y and "nether" in self.dims:
+                parts += ["--nether-top", str(self.nether_top)]
             if self.zoomin != 0:
                 parts += ["--zoomin", str(self.zoomin)]
             if self.zoomout != 6:
@@ -250,6 +282,17 @@ def build_plan(args: argparse.Namespace, project: Project, mode: str, interactiv
         elif interactive:
             plan.force = prompts.confirm("Re-render everything? (otherwise only changed regions)", False)
 
+        has_biome_dims = any(d in biomes.DIMENSIONS for d in dims)
+        if args.biomes is not None:
+            plan.biomes = args.biomes and has_biome_dims
+        elif interactive and has_biome_dims:
+            plan.biomes = prompts.confirm(
+                "Also render biome maps? (Overworld and Nether; about doubles render time and disk space)",
+                bool(state.get("biomes", False)))
+
+        if args.nether_top is not None:
+            plan.nether_top = max(0, args.nether_top)
+
         plan.zoomin = args.zoomin if args.zoomin is not None else 0
         plan.zoomout = args.zoomout if args.zoomout is not None else 6
         advanced_given = args.zoomin is not None or args.zoomout is not None or args.extra
@@ -277,6 +320,8 @@ def _summary(plan: Plan, project: Project) -> None:
     steps = []
     if plan.render:
         steps.append("render" + (" (everything)" if plan.force else " (changed regions)"))
+        if plan.biomes:
+            steps.append("biome maps")
     if plan.scan:
         steps.append("scan structures" + (" incl. common finds" if plan.extras else ""))
     if plan.realm:
@@ -312,13 +357,16 @@ def run_plan(plan: Plan, project: Project) -> None:
     prompts.info(f"uNmINeD CLI {cli.version}")
 
     if plan.render:
+        biome_dims = [d for d in plan.dims if d in biomes.DIMENSIONS] if plan.biomes else []
+        biome_cli = biomes.biome_cli(cli, project.cache_dir) if biome_dims else None
+
         for dim_id in plan.dims:
             prompts.heading(f"Rendering {DIM_LABELS[dim_id]}")
             t = time.monotonic()
             log_file = project.render_log(dim_id)
             unmined.render(cli, plan.world.path, dim_id, project.map_dir / dim_id,
-                           zoomout=plan.zoomout, zoomin=plan.zoomin, force=plan.force, extra=plan.extra,
-                           log_file=log_file)
+                           zoomout=plan.zoomout, zoomin=plan.zoomin, force=plan.force,
+                           extra=plan.render_args(dim_id), log_file=log_file)
             doc = stats.update_stats(project.stats_file, dim_id, stats.parse_render_log(log_file),
                                      project.map_dir / dim_id)
             d = doc["dimensions"][dim_id]
@@ -328,6 +376,33 @@ def run_plan(plan: Plan, project: Project) -> None:
                 details += f", {run['chunksFailed']:,} chunks failed"
             prompts.success(f"{DIM_LABELS[dim_id]} rendered in {_duration(time.monotonic() - t)} ({details})")
             prompts.info(dim(f"Full log: {log_file}"))
+
+            if dim_id in biome_dims:
+                prompts.heading(f"Rendering {DIM_LABELS[dim_id]} biome map")
+                t = time.monotonic()
+                log_file = project.render_log(f"{dim_id}-biomes")
+                unmined.render(biome_cli, plan.world.path, dim_id, project.map_dir / f"{dim_id}-biomes",
+                               zoomout=plan.zoomout, zoomin=plan.zoomin, force=plan.force,
+                               extra=plan.render_args(dim_id), log_file=log_file)
+                prompts.success(f"{DIM_LABELS[dim_id]} biome map rendered in {_duration(time.monotonic() - t)}")
+
+        if biome_dims:
+            edition = biomes.edition_of(plan.world.edition)
+            counts = None
+            if edition == "bedrock":
+                # Biome under the cursor on the web page: read straight from the world.
+                prompts.heading("Reading biomes for hover info")
+                t = time.monotonic()
+                try:
+                    tops = {d: plan.top_y(d) for d in biome_dims if plan.top_y(d) is not None}
+                    counts = biomes.write_lookup(project.map_dir, plan.world.path, biome_dims, tops)
+                    found = ", ".join(f"{DIM_LABELS[d]} {len(c)}" for d, c in counts.items())
+                    prompts.success(f"Biomes read in {_duration(time.monotonic() - t)} ({found} biomes)")
+                except (bedrock.BedrockError, OSError, ValueError, zlib.error) as e:
+                    prompts.warn(f"Biome hover info skipped: {e}")
+            else:
+                prompts.info(dim("Biome hover info is only available for Bedrock worlds."))
+            biomes.write_legend(project.biomes_file, cli, edition, biome_dims, counts)
 
     if plan.scan:
         found: list[dict] = []
@@ -382,7 +457,12 @@ def cmd_build(args: argparse.Namespace, mode: str) -> int:
             raise Aborted()
 
     source = {"realm": plan.realm.id} if plan.realm else {"world": str(plan.world.path)}
-    project.save_state({**source, "dims": plan.dims})
+    state = {**source, "dims": plan.dims}
+    if plan.render:
+        state["biomes"] = plan.biomes
+    elif "biomes" in project.load_state():
+        state["biomes"] = project.load_state()["biomes"]
+    project.save_state(state)
     run_plan(plan, project)
     return 0
 
@@ -463,6 +543,11 @@ def make_parser() -> argparse.ArgumentParser:
                        help="re-render all regions, not just changed ones")
     group.add_argument("--zoomin", type=int, help="zoom-in levels with real tiles (default: 0)")
     group.add_argument("--zoomout", type=int, help="zoom-out levels (default: 6)")
+    group.add_argument("--biomes", action=argparse.BooleanOptionalAction, default=None,
+                       help="also render biome maps of the Overworld and Nether (about 2x time and disk)")
+    group.add_argument("--nether-top", type=int, metavar="Y",
+                       help=f"render the Nether from this height down, below its bedrock roof "
+                            f"(default: {NETHER_TOP_Y}; 0 = from the top, shows only the roof)")
 
     scan_opts = argparse.ArgumentParser(add_help=False)
     group = scan_opts.add_argument_group("scan options")
@@ -508,7 +593,7 @@ def main(argv: list[str] | None = None) -> int:
     # Fill in options a subcommand doesn't define (e.g. scan has no --force).
     for name, default in (("world", None), ("output", None), ("realm", None), ("slot", None), ("dims", None), ("yes", False),
                           ("ignore_running", False), ("force", None), ("zoomin", None), ("zoomout", None),
-                          ("extras", None)):
+                          ("extras", None), ("biomes", None), ("nether_top", None)):
         if not hasattr(args, name):
             setattr(args, name, default)
     args.extra = extra

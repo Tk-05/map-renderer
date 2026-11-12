@@ -93,6 +93,7 @@
         #measure-toggle        { --accent: #b7791f; }
         #structures-toggle     { --accent: #2f6fb3; }
         #stats-toggle          { --accent: #2f8a7e; }
+        #biomes-toggle         { --accent: #5d8f2c; }
 
         /* Dimension statistics */
         #stats {
@@ -205,6 +206,8 @@
             background: var(--accent);
             color: #fff;
         }
+
+        #tools button[hidden] { display: none; }
 
         #tools svg {
             width: 18px;
@@ -329,6 +332,149 @@
             flex: none;
         }
 
+        /* Biome legend (shown with the biome map) */
+        #biomes {
+            top: 48px;
+            right: 58px; /* left of the tool bar */
+            width: 240px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        #biomes h2 { margin: 0; }
+
+        #biomes .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        #biomes-all {
+            padding: 3px 8px;
+            border: 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        #biomes-all:hover { background: rgba(255, 255, 255, 0.18); }
+        #biomes-all:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+        #biomes-all[hidden] { display: none; }
+        #biomes:has(#biomes-body[hidden]) #biomes-all { display: none; }
+
+        #biomes input { margin: 0; accent-color: #5d8f2c; flex: none; }
+
+        #biomes h3 label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        #biomes label.biome { cursor: pointer; }
+        #biomes .biome.off { color: #7c7c86; }
+        #biomes .biome.off .swatch { opacity: 0.35; }
+
+        #biomes-collapse {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        #biomes-collapse:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        #biomes .chevron {
+            width: 7px;
+            height: 7px;
+            margin-right: 3px;
+            border-right: 2px solid #9a9aa4;
+            border-bottom: 2px solid #9a9aa4;
+            transform: translateY(-2px) rotate(45deg);
+            transition: transform 0.15s;
+        }
+
+        #biomes-collapse[aria-expanded="false"] .chevron { transform: translateY(1px) rotate(-135deg); }
+        #biomes-body[hidden] { display: none; }
+        #biomes:has(#biomes-body[hidden]) { width: auto; min-width: 140px; }
+
+        #biomes h3 {
+            margin: 10px 0 2px;
+            color: #9a9aa4;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        #biomes .biome {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 1px 0;
+        }
+
+        #biomes .biome .share {
+            margin-left: auto;
+            padding-left: 6px;
+            white-space: nowrap;
+            color: #9a9aa4;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #biomes .biome.active {
+            margin: 0 -6px;
+            padding: 1px 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+        }
+
+        /* Biome under the cursor */
+        #biome-tip {
+            position: fixed;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 4px 9px;
+            border-radius: 7px;
+            background: rgba(20, 20, 24, 0.92);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        #biome-tip[hidden] { display: none; }
+
+        #biome-tip .swatch,
+        #biomes .swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            background: var(--biome-color);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+            flex: none;
+        }
+
         /* Structure details */
         #info {
             bottom: 48px;
@@ -437,6 +583,11 @@
                 max-height: calc(100vh - 200px);
             }
 
+            #biomes {
+                width: min(240px, calc(100vw - 74px));
+                max-height: calc(100vh - 200px);
+            }
+
             #info {
                 bottom: 92px;
                 width: calc(100vw - 32px);
@@ -467,6 +618,13 @@
                 <path d="M4 12V8M8 12V3.5M12 12V6" stroke-width="2" stroke-linecap="round" />
             </svg>
         </button>
+        <button type="button" id="biomes-toggle" aria-pressed="false" aria-controls="biomes"
+            aria-label="Biome map" title="Biome map (key B)" hidden>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M2.5 13.5c0-6.5 4.5-11 11-11 0 6.5-4.5 11-11 11z" />
+                <path d="M2.5 13.5l6-6" stroke-linecap="round" />
+            </svg>
+        </button>
         <button type="button" id="measure-toggle" aria-pressed="false"
             aria-label="Measure distance" title="Measure distance (key M)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -494,6 +652,24 @@
         </div>
         <div id="stats-body" role="tabpanel"></div>
     </section>
+
+    <section id="biomes" class="panel" aria-label="Biomes" hidden>
+        <div class="panel-header">
+            <h2>
+                <button type="button" id="biomes-collapse" aria-expanded="true" aria-controls="biomes-body"
+                    title="Collapse or expand the list">
+                    Biomes<span class="chevron" aria-hidden="true"></span>
+                </button>
+            </h2>
+            <button type="button" id="biomes-all" hidden></button>
+        </div>
+        <div id="biomes-body">
+            <div id="biomes-list"></div>
+            <p class="muted" id="biomes-meta" hidden></p>
+        </div>
+    </section>
+
+    <div id="biome-tip" role="status" hidden><span class="swatch"></span><span class="name"></span></div>
 
     <section id="info" class="panel" aria-live="polite" hidden>
         <h2><span class="type-icon" id="info-icon"></span><span id="info-title"></span></h2>
@@ -633,6 +809,463 @@
             } catch (e) { /* ignore */ }
         }
 
+        // ---- Biome maps ------------------------------------------------------
+        // map-renderer --biomes renders map/<dim>-biomes/ next to the normal
+        // export (same projection) and writes the legend to map/biomes.json.
+
+        const BIOME_MODE_KEY = 'map-renderer.biome-mode';
+        const biomesToggle = document.getElementById('biomes-toggle');
+        const biomesPanel = document.getElementById('biomes');
+        const biomesList = document.getElementById('biomes-list');
+        const biomesMeta = document.getElementById('biomes-meta');
+
+        let biomeDoc = null; // parsed biomes.json: { edition, dimensions: { overworld: [...], ... } }
+        let biomeMode = false;
+        try { biomeMode = localStorage.getItem(BIOME_MODE_KEY) === '1'; } catch (e) { /* ignore */ }
+
+        const hasBiomeMap = dim => Boolean(biomeDoc && biomeDoc.dimensions && biomeDoc.dimensions[dim]);
+        const mapPath = dim => (biomeMode && hasBiomeMap(dim) ? 'map/' + dim + '-biomes/index.html' : DIMENSIONS[dim].path);
+
+        const biomesLoaded = fetch('map/biomes.json', { cache: 'no-cache' })
+            .then(r => (r.ok ? r.json() : null))
+            .catch(() => null)
+            .then(doc => {
+                biomeDoc = doc && doc.dimensions && Object.keys(doc.dimensions).length ? doc : null;
+                biomesToggle.hidden = !biomeDoc;
+                biomesToggle.setAttribute('aria-pressed', String(biomeMode && !!biomeDoc));
+                if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
+            });
+
+        // Load the other export of the current dimension at the same position.
+        function reloadMap() {
+            const v = readView();
+            if (v) {
+                rememberView(current, v);
+                pendingView = v;
+            }
+            measureReset();
+            structuresReset();
+            hideBiomeTip();
+            frame.src = mapPath(current);
+        }
+
+        // Biomes switched off in the legend are dimmed on the map, so the ones
+        // still selected stand out (needs the lookup data: Bedrock worlds).
+        const HIDDEN_BIOMES_KEY = 'map-renderer.hidden-biomes';
+        const biomesAll = document.getElementById('biomes-all');
+        let hiddenBiomes = new Set();
+        try { hiddenBiomes = new Set(JSON.parse(localStorage.getItem(HIDDEN_BIOMES_KEY)) || []); } catch (e) { /* ignore */ }
+
+        function setBiomesHidden(ids, hidden) {
+            for (const id of ids) {
+                if (hidden) hiddenBiomes.add(id); else hiddenBiomes.delete(id);
+            }
+            try { localStorage.setItem(HIDDEN_BIOMES_KEY, JSON.stringify([...hiddenBiomes])); } catch (e) { /* ignore */ }
+            refreshBiomeMask();
+            const scroll = biomesPanel.scrollTop;
+            renderBiomeLegend();
+            biomesPanel.scrollTop = scroll;
+        }
+
+        function checkbox(checked, indeterminate, onChange) {
+            const box = document.createElement('input');
+            box.type = 'checkbox';
+            box.checked = checked;
+            box.indeterminate = indeterminate;
+            box.addEventListener('change', () => onChange(box.checked));
+            return box;
+        }
+
+        function renderBiomeLegend() {
+            if (biomesPanel.hidden) return;
+            const entries = hasBiomeMap(current) ? biomeDoc.dimensions[current] : [];
+            const selectable = Boolean(biomeDoc && biomeDoc.lookup && biomeDoc.lookup[current]);
+            const parts = [];
+            const groups = new Map(); // group -> ids
+            for (const b of entries) {
+                if (!groups.has(b.group)) groups.set(b.group, []);
+                groups.get(b.group).push(b.id);
+            }
+
+            let group = null;
+            for (const b of entries) {
+                if (b.group !== group) {
+                    group = b.group;
+                    const h = document.createElement('h3');
+                    const ids = groups.get(group);
+                    if (selectable && ids.length > 1) {
+                        const off = ids.filter(id => hiddenBiomes.has(id)).length;
+                        const label = document.createElement('label');
+                        label.title = 'Show or hide all ' + group + ' biomes';
+                        label.append(checkbox(off === 0, off > 0 && off < ids.length,
+                            on => setBiomesHidden(ids, !on)), document.createTextNode(group));
+                        h.append(label);
+                    } else {
+                        h.textContent = group;
+                    }
+                    parts.push(h);
+                }
+                const off = selectable && hiddenBiomes.has(b.id);
+                const row = document.createElement(selectable ? 'label' : 'div');
+                row.className = 'biome' + (off ? ' off' : '');
+                if (b.value) row.dataset.value = b.value;
+                const swatch = document.createElement('span');
+                swatch.className = 'swatch';
+                swatch.style.setProperty('--biome-color', b.color);
+                const name = document.createElement('span');
+                name.textContent = b.name;
+                row.title = b.id;
+                if (selectable) row.append(checkbox(!off, false, on => setBiomesHidden([b.id], !on)));
+                row.append(swatch, name);
+                if (b.share !== undefined) {
+                    const share = document.createElement('span');
+                    share.className = 'share';
+                    share.textContent = b.share >= 0.001
+                        ? (b.share * 100).toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' %'
+                        : '< 0.1 %';
+                    share.title = 'Share of the explored area';
+                    row.append(share);
+                }
+                parts.push(row);
+            }
+            biomesList.replaceChildren(...parts);
+            highlightBiome(activeBiomeValue);
+
+            // "Hide all" / "Show all" for the biomes of this dimension.
+            const ids = entries.map(b => b.id);
+            const allVisible = ids.every(id => !hiddenBiomes.has(id));
+            biomesAll.hidden = !selectable || ids.length === 0;
+            biomesAll.textContent = allVisible ? 'Hide all' : 'Show all';
+            biomesAll.title = allVisible
+                ? 'Dim all biomes, then tick the ones to find'
+                : 'Show all biomes again';
+            biomesAll.onclick = () => setBiomesHidden(ids, allVisible);
+
+            biomesMeta.hidden = entries.length > 0;
+            biomesMeta.textContent = current === 'end'
+                ? 'The End is a single biome; there is no biome map for it.'
+                : 'No biome map for this dimension yet. Run: map-renderer render --biomes';
+        }
+
+        // ---- Biome under the cursor (hover, or click/tap) --------------------
+        // map-renderer reads the surface biomes from Bedrock worlds into
+        // map/biomedata/<dim>/r.<rx>.<rz>.bin: zlib, one byte per 4x4 block
+        // cell (128x128 per region), byte = Bedrock biome number + 1, 0 = none.
+
+        const biomeTip = document.getElementById('biome-tip');
+        const biomeTipSwatch = biomeTip.querySelector('.swatch');
+        const biomeTipName = biomeTip.querySelector('.name');
+        const biomeRegions = new Map(); // "dim:rx:rz" -> Promise<Uint8Array|null>
+        let activeBiomeValue = 0;
+        let biomeTipToken = 0;
+
+        const hasBiomeLookup = dim => Boolean(biomeMode && biomeDoc && biomeDoc.lookup && biomeDoc.lookup[dim]
+            && typeof DecompressionStream === 'function');
+
+        const biomeIndexes = new Map(); // dim -> Promise<{ regions: Set, overview } | null>
+
+        const lookupUrl = (dim, file) => 'map/' + biomeDoc.lookup[dim] + '/' + file + '?v='
+            + encodeURIComponent(biomeDoc.generated || '');
+
+        function fetchInflated(url) {
+            return fetch(url)
+                .then(r => (r.ok ? new Response(r.body.pipeThrough(new DecompressionStream('deflate'))).arrayBuffer() : null))
+                .then(buf => (buf ? new Uint8Array(buf) : null))
+                .catch(() => null);
+        }
+
+        // index.json: which regions exist (no requests for unexplored ones) and the overview's bounds.
+        function biomeIndex(dim) {
+            if (!biomeIndexes.has(dim)) {
+                biomeIndexes.set(dim, fetch(lookupUrl(dim, 'index.json'))
+                    .then(r => (r.ok ? r.json() : null))
+                    .then(index => index && {
+                        regions: new Set((index.regions || []).map(([rx, rz]) => rx + ':' + rz)),
+                        overview: index.overview ? {
+                            size: index.overview.size,     // blocks per overview tile
+                            pixels: index.overview.pixels, // bytes per tile side (1 per chunk)
+                            tiles: new Set(index.overview.tiles.map(([gx, gz]) => gx + ':' + gz))
+                        } : null
+                    })
+                    .catch(() => null));
+            }
+            return biomeIndexes.get(dim);
+        }
+
+        function biomeRegion(dim, rx, rz) {
+            const key = dim + ':' + rx + ':' + rz;
+            if (!biomeRegions.has(key)) {
+                biomeRegions.set(key, biomeIndex(dim).then(index =>
+                    (index && !index.regions.has(rx + ':' + rz)
+                        ? null
+                        : fetchInflated(lookupUrl(dim, 'r.' + rx + '.' + rz + '.bin')))));
+            }
+            return biomeRegions.get(key);
+        }
+
+        function biomeOverview(dim, gx, gz) {
+            const key = dim + ':o:' + gx + ':' + gz;
+            if (!biomeRegions.has(key)) {
+                biomeRegions.set(key, biomeIndex(dim).then(index =>
+                    (index && index.overview && index.overview.tiles.has(gx + ':' + gz)
+                        ? fetchInflated(lookupUrl(dim, 'o.' + gx + '.' + gz + '.bin'))
+                        : null)));
+            }
+            return biomeRegions.get(key);
+        }
+
+        async function biomeAt(dim, x, z) {
+            const size = biomeDoc.lookupRegion || 512;
+            const cell = biomeDoc.lookupCell || 4;
+            const rx = Math.floor(x / size);
+            const rz = Math.floor(z / size);
+            const data = await biomeRegion(dim, rx, rz);
+            if (!data) return null;
+            const perRow = size / cell;
+            const value = data[Math.floor((z - rz * size) / cell) * perRow + Math.floor((x - rx * size) / cell)];
+            if (!value) return null;
+            return (biomeDoc.dimensions[dim] || []).find(b => b.value === value) || null;
+        }
+
+        function highlightBiome(value) {
+            activeBiomeValue = value || 0;
+            biomesList.querySelectorAll('.biome.active').forEach(r => r.classList.remove('active'));
+            if (activeBiomeValue) {
+                const row = biomesList.querySelector('.biome[data-value="' + activeBiomeValue + '"]');
+                if (row) row.classList.add('active');
+            }
+        }
+
+        function hideBiomeTip() {
+            biomeTipToken++;
+            biomeTip.hidden = true;
+            highlightBiome(0);
+        }
+
+        // Show the biome at a map pixel. Lookups are async, so a newer request
+        // (token) wins over answers that arrive late.
+        async function showBiomeAt(u, ol, pixel) {
+            const token = ++biomeTipToken;
+            if (!hasBiomeLookup(current) || measureActive) {
+                hideBiomeTip();
+                return;
+            }
+            const block = ol.proj.transform(u.olMap.getCoordinateFromPixel(pixel), u.viewProjection, u.dataProjection);
+            const b = await biomeAt(current, Math.floor(block[0]), Math.floor(block[1]));
+            if (token !== biomeTipToken) return;
+            if (!b) {
+                biomeTip.hidden = true;
+                highlightBiome(0);
+                return;
+            }
+            biomeTipSwatch.style.setProperty('--biome-color', b.color);
+            biomeTipName.textContent = b.name;
+            const rect = frame.getBoundingClientRect();
+            biomeTip.hidden = false;
+            // Below right of the cursor, kept inside the window.
+            const left = Math.min(rect.left + pixel[0] + 14, window.innerWidth - biomeTip.offsetWidth - 8);
+            const top = Math.min(rect.top + pixel[1] + 18, window.innerHeight - biomeTip.offsetHeight - 8);
+            biomeTip.style.left = Math.max(8, left) + 'px';
+            biomeTip.style.top = Math.max(8, top) + 'px';
+            highlightBiome(b.value);
+        }
+
+        function attachBiomeHover() {
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            const view = frame.contentWindow;
+            let pending = null;
+            u.olMap.on('pointermove', e => {
+                if (e.dragging) {
+                    hideBiomeTip();
+                    return;
+                }
+                if (!hasBiomeLookup(current)) return;
+                if (pending === null) {
+                    view.requestAnimationFrame(() => {
+                        const pixel = pending;
+                        pending = null;
+                        showBiomeAt(u, ol, pixel);
+                    });
+                }
+                pending = e.pixel;
+            });
+            // Touch screens have no hover: a tap shows the biome there.
+            u.olMap.on('singleclick', e => {
+                if (hasBiomeLookup(current)) showBiomeAt(u, ol, e.pixel);
+            });
+            u.olMap.getViewport().addEventListener('mouseleave', hideBiomeTip);
+        }
+
+        // ---- Dimming hidden biomes on the map --------------------------------
+        // An image layer above the biome tiles. Per region, a mask with one
+        // pixel per 4x4 cell (dark where the biome is hidden) is built once
+        // from the lookup data and drawn scaled into place.
+
+        const BIOME_DIM = [14, 14, 18, 225]; // RGBA over hidden biomes
+        const OVERVIEW_BLOCKS_PER_PIXEL = 8; // zoomed out further: one overview image instead of regions
+        let biomeMask = null;                // { layer, source, masks } of the loaded biome map
+
+        // Canvas (one pixel per value) that is dark where the biome is hidden.
+        // Cells without biome data (0) are dimmed too: only the selection stays bright.
+        function maskCanvas(doc, data, width, height, dim) {
+            const hidden = new Set(biomeDoc.dimensions[dim].filter(b => hiddenBiomes.has(b.id)).map(b => b.value));
+            hidden.add(0);
+            const canvas = doc.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const g = canvas.getContext('2d');
+            const img = g.createImageData(width, height);
+            for (let i = 0; i < data.length; i++) {
+                if (hidden.has(data[i])) img.data.set(BIOME_DIM, i * 4);
+            }
+            g.putImageData(img, 0, 0);
+            return canvas;
+        }
+
+        function refreshBiomeMask() {
+            if (!biomeMask) return;
+            biomeMask.masks.clear();
+            biomeMask.layer.setVisible(hiddenBiomes.size > 0);
+            biomeMask.source.changed();
+        }
+
+        function attachBiomeMask() {
+            biomeMask = null;
+            if (!hasBiomeLookup(current)) return;
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+
+            const dim = current;
+            const doc = u.olMap.getTargetElement().ownerDocument;
+            const size = biomeDoc.lookupRegion || 512;
+            const cells = size / (biomeDoc.lookupCell || 4);
+            const masks = new Map(); // "rx:rz" -> canvas | null (no data) | 'loading'
+            const toBlock = c => ol.proj.transform(c, u.viewProjection, u.dataProjection);
+            const toView = b => ol.proj.transform(b, u.dataProjection, u.viewProjection);
+            let redraw = 0;
+            let source = null;
+
+            const scheduleRedraw = () => {
+                if (!redraw) redraw = doc.defaultView.requestAnimationFrame(() => { redraw = 0; source.changed(); });
+            };
+
+            // Mask for a region ("rx:rz") or the overview ("overview"); built
+            // asynchronously, the layer redraws when it is ready.
+            function mask(key, load, width, height) {
+                if (masks.has(key)) return masks.get(key);
+                masks.set(key, 'loading');
+                load().then(data => {
+                    if (masks.get(key) !== 'loading') return; // cleared meanwhile; requested again on redraw
+                    masks.set(key, data ? maskCanvas(doc, data, width, height, dim) : null);
+                    if (data) scheduleRedraw();
+                });
+                return 'loading';
+            }
+
+            // Draw `image` so that its corners land on blocks (bx0, bz0) and (bx1, bz1).
+            function place(g, image, extent, sx, sy, bx0, bz0, bx1, bz1) {
+                const p0 = toView([bx0, bz0]);
+                const p1 = toView([bx1, bz1]);
+                const x0 = (p0[0] - extent[0]) * sx, y0 = (extent[3] - p0[1]) * sy;
+                const x1 = (p1[0] - extent[0]) * sx, y1 = (extent[3] - p1[1]) * sy;
+                g.setTransform((x1 - x0) / image.width, 0, 0, (y1 - y0) / image.height, x0, y0);
+                g.drawImage(image, 0, 0);
+            }
+
+            let index = null;
+            biomeIndex(dim).then(i => {
+                index = i;
+                scheduleRedraw();
+            });
+
+            source = new ol.source.ImageCanvas({
+                interpolate: false,
+                ratio: 1.2,
+                canvasFunction: (extent, resolution, pixelRatio, imgSize) => {
+                    const canvas = doc.createElement('canvas');
+                    canvas.width = imgSize[0];
+                    canvas.height = imgSize[1];
+                    if (!hiddenBiomes.size || !index) return canvas;
+                    const g = canvas.getContext('2d');
+                    g.imageSmoothingEnabled = false;
+                    const sx = imgSize[0] / (extent[2] - extent[0]);
+                    const sy = imgSize[1] / (extent[3] - extent[1]);
+                    const a = toBlock([extent[0], extent[1]]);
+                    const b = toBlock([extent[2], extent[3]]);
+                    const blocksPerPixel = Math.abs(b[0] - a[0]) / (imgSize[0] / pixelRatio);
+
+                    // Far out: overview tiles (1 pixel per chunk); closer: region files (4x4 cells).
+                    const ov = index.overview;
+                    const overview = ov && blocksPerPixel >= OVERVIEW_BLOCKS_PER_PIXEL;
+                    const step = overview ? ov.size : size;
+                    const tiles = overview ? ov.tiles : index.regions;
+                    const x0 = Math.floor(Math.min(a[0], b[0]) / step), x1 = Math.floor(Math.max(a[0], b[0]) / step);
+                    const z0 = Math.floor(Math.min(a[1], b[1]) / step), z1 = Math.floor(Math.max(a[1], b[1]) / step);
+                    for (let tx = x0; tx <= x1; tx++) {
+                        for (let tz = z0; tz <= z1; tz++) {
+                            if (!tiles.has(tx + ':' + tz)) continue;
+                            const m = overview
+                                ? mask('o:' + tx + ':' + tz, () => biomeOverview(dim, tx, tz), ov.pixels, ov.pixels)
+                                : mask(tx + ':' + tz, () => biomeRegion(dim, tx, tz), cells, cells);
+                            if (m && m !== 'loading') {
+                                place(g, m, extent, sx, sy, tx * step, tz * step, (tx + 1) * step, (tz + 1) * step);
+                            }
+                        }
+                    }
+                    g.setTransform(1, 0, 0, 1, 0, 0);
+                    return canvas;
+                }
+            });
+            const layer = new ol.layer.Image({ source, zIndex: 1000, visible: hiddenBiomes.size > 0 });
+            u.olMap.addLayer(layer);
+            biomeMask = { layer, source, masks };
+        }
+
+        // The list can be collapsed to just the title while the biome map stays on.
+        const BIOME_COLLAPSED_KEY = 'map-renderer.biome-legend-collapsed';
+        const biomesCollapse = document.getElementById('biomes-collapse');
+        const biomesBody = document.getElementById('biomes-body');
+
+        function setBiomeListCollapsed(collapsed) {
+            biomesBody.hidden = collapsed;
+            biomesCollapse.setAttribute('aria-expanded', String(!collapsed));
+            try { localStorage.setItem(BIOME_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (e) { /* ignore */ }
+        }
+
+        try { setBiomeListCollapsed(localStorage.getItem(BIOME_COLLAPSED_KEY) === '1'); } catch (e) { /* ignore */ }
+        biomesCollapse.addEventListener('click', () => setBiomeListCollapsed(!biomesBody.hidden));
+
+        function setBiomesPanel(open) {
+            biomesPanel.hidden = !open;
+            if (open) {
+                setStructuresPanel(false); // the panels share one spot
+                setStatsPanel(false);
+                renderBiomeLegend();
+            }
+        }
+
+        function setBiomeMode(on) {
+            biomeMode = on;
+            try { localStorage.setItem(BIOME_MODE_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            biomesToggle.setAttribute('aria-pressed', String(on));
+            if (!on) hideBiomeTip();
+            setBiomesPanel(on);
+            if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
+        }
+
+        // Off -> biome map + legend; on with the legend hidden -> show legend; else off.
+        function toggleBiomes() {
+            if (!biomeDoc) return;
+            if (!biomeMode) setBiomeMode(true);
+            else if (biomesPanel.hidden) setBiomesPanel(true);
+            else setBiomeMode(false);
+        }
+
+        biomesToggle.addEventListener('click', toggleBiomes);
+
         // `view` overrides the carried-over position (used to jump to a structure).
         function select(dim, { pushHistory = true, view = null } = {}) {
             if (!DIMENSIONS[dim]) dim = DEFAULT_DIM;
@@ -661,7 +1294,8 @@
             current = dim;
             measureReset(); // the measurement belongs to the map being unloaded
             structuresReset();
-            frame.src = to.path;
+            hideBiomeTip();
+            frame.src = mapPath(dim);
             buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dim === dim)));
             document.title = to.label; // the tab shows only the dimension
 
@@ -1170,7 +1804,8 @@
             structuresPanel.hidden = !open;
             structuresToggle.setAttribute('aria-pressed', String(open));
             if (open) {
-                setStatsPanel(false); // both panels use the same spot
+                setStatsPanel(false); // the panels use the same spot
+                biomesPanel.hidden = true;
                 renderLegend();
             }
         }
@@ -1401,6 +2036,7 @@
             statsToggle.setAttribute('aria-pressed', String(open));
             if (open) {
                 setStructuresPanel(false);
+                biomesPanel.hidden = true;
                 statsDim = current;
                 renderStats();
             }
@@ -1434,7 +2070,11 @@
 
             measureAttach();
             renderMeasure(null);
+            attachBiomeHover();
             const loadedWindow = frame.contentWindow;
+            biomesLoaded.then(() => {
+                if (frame.contentWindow === loadedWindow) attachBiomeMask();
+            });
             structuresLoaded.then(() => {
                 if (frame.contentWindow === loadedWindow) attachStructures();
                 renderStats();
@@ -1443,6 +2083,7 @@
             // The statistics panel follows the dimension shown on the map.
             statsDim = current;
             renderStats();
+            renderBiomeLegend();
             // Forward number keys from inside the map to the switcher.
             try {
                 frame.contentWindow.addEventListener('keydown', onKey);
@@ -1460,6 +2101,8 @@
                 setStructuresPanel(structuresPanel.hidden);
             } else if (e.key === 'i' || e.key === 'I') {
                 setStatsPanel(statsPanel.hidden);
+            } else if (e.key === 'b' || e.key === 'B') {
+                toggleBiomes();
             } else if (e.key === 'Escape' && !infoPanel.hidden) {
                 hideInfo();
             } else if (e.key === 'Escape' && measureActive) {
@@ -1475,7 +2118,13 @@
         window.addEventListener('keydown', onKey);
         window.addEventListener('hashchange', () => select(location.hash.slice(1), { pushHistory: false }));
 
-        select(location.hash.slice(1) || DEFAULT_DIM);
+        // With the biome map switched on, wait for biomes.json so the right
+        // export is loaded first (instead of loading the normal map twice).
+        if (biomeMode) {
+            biomesLoaded.then(() => select(location.hash.slice(1) || DEFAULT_DIM));
+        } else {
+            select(location.hash.slice(1) || DEFAULT_DIM);
+        }
     </script>
 </body>
 
