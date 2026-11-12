@@ -590,6 +590,7 @@
 
         #search-toggle { --accent: #6a5acd; }
         #slime-toggle  { --accent: #4e9a3c; }
+        #grid-toggle   { --accent: #5d6d7e; }
         #caves-toggle  { --accent: #8a6d3b; }
 
         /* Short notice at the bottom, e.g. "zoom in to see slime chunks" */
@@ -648,6 +649,50 @@
         }
 
         #measure[hidden] { display: none; }
+
+        /* Farm radius tool (bottom left, so the circles in the middle stay visible) */
+        #radius {
+            left: 8px;
+            bottom: 44px;
+            width: 330px;
+        }
+
+        #radius-toggle { --accent: #c0392b; }
+        #radius .centre { margin: 2px 0 6px; color: #fff; font-variant-numeric: tabular-nums; }
+
+        #radius label.ring {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 0;
+            cursor: pointer;
+        }
+
+        #radius .ring .line {
+            width: 16px;
+            height: 0;
+            border-top: 3px solid var(--ring-color);
+            flex: none;
+        }
+
+        #radius .ring b { min-width: 30px; color: #fff; font-variant-numeric: tabular-nums; }
+        #radius input[type="checkbox"] { margin: 0; accent-color: #c0392b; flex: none; }
+
+        #radius input[type="number"],
+        #radius select {
+            width: 64px;
+            padding: 2px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font: inherit;
+        }
+
+        #radius select { width: auto; }
+        #radius select option { background: #222; }
+        #radius .sim { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+        #radius .note { margin: 6px 0 0; }
 
         #measure .total {
             color: #fff;
@@ -708,6 +753,11 @@
             #measure {
                 top: auto;
                 bottom: 92px;
+            }
+
+            #radius {
+                bottom: 92px;
+                width: calc(100vw - 32px);
             }
 
             #structures {
@@ -781,11 +831,26 @@
                 <path d="M6 13.5c0-2.2.9-4 2-4s2 1.8 2 4" />
             </svg>
         </button>
+        <button type="button" id="grid-toggle" aria-pressed="false"
+            aria-label="Chunk and region grid" title="Chunk and region grid (key G)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+                <rect x="2" y="2" width="12" height="12" />
+                <path d="M6 2v12M10 2v12M2 6h12M2 10h12" />
+            </svg>
+        </button>
         <button type="button" id="slime-toggle" aria-pressed="false" hidden
             aria-label="Slime chunks" title="Slime chunks (key K, Overworld)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <rect x="2.5" y="3.5" width="11" height="10" rx="2.5" />
                 <path d="M5.5 7.5v1.2M10.5 7.5v1.2M6.5 11h3" stroke-linecap="round" />
+            </svg>
+        </button>
+        <button type="button" id="radius-toggle" aria-pressed="false" aria-controls="radius"
+            aria-label="Farm radius" title="Farm radius: spawn and despawn circles (key R)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="8" cy="8" r="6.3" />
+                <circle cx="8" cy="8" r="3" />
+                <circle cx="8" cy="8" r="0.6" fill="currentColor" />
             </svg>
         </button>
         <button type="button" id="measure-toggle" aria-pressed="false"
@@ -863,6 +928,28 @@
         <div class="actions">
             <button type="button" id="measure-finish">Finish</button>
             <button type="button" id="measure-clear">Clear</button>
+        </div>
+    </section>
+
+    <section id="radius" class="panel" aria-label="Farm radius" hidden>
+        <h2>Farm radius</h2>
+        <div class="centre" id="radius-centre"></div>
+        <div id="radius-rings"></div>
+        <label class="sim">Simulation distance
+            <select id="radius-sim" title="Bedrock spawns mobs only within n−1 chunks (taxicab) of the player's chunk">
+                <option value="0">not shown</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+            </select>
+        </label>
+        <p class="muted note">Bedrock values. Distances are spherical: above or below the
+            centre's height the area is smaller.</p>
+        <div class="actions">
+            <button type="button" id="radius-tp">Copy /tp</button>
+            <button type="button" id="radius-clear">Clear</button>
+            <button type="button" id="radius-close">Close</button>
         </div>
     </section>
 
@@ -1567,6 +1654,26 @@
             return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ' h';
         }
 
+        // ---- Placed things, kept per browser ----------------------------------
+        // What a user places on the map (radius centre, measured line) is saved
+        // in this browser's localStorage per dimension and comes back after a
+        // reload. It is not shared with other visitors.
+
+        const PLACED_KEY = 'map-renderer.placed';
+        let placed = { radius: {}, measure: {} };
+        try {
+            const saved = JSON.parse(localStorage.getItem(PLACED_KEY));
+            if (saved && typeof saved === 'object') {
+                placed = { radius: saved.radius || {}, measure: saved.measure || {} };
+            }
+        } catch (e) { /* ignore */ }
+
+        function setPlaced(kind, dim, value) {
+            if (value === null || value === undefined) delete placed[kind][dim];
+            else placed[kind][dim] = value;
+            try { localStorage.setItem(PLACED_KEY, JSON.stringify(placed)); } catch (e) { /* ignore */ }
+        }
+
         function toBlocks(ctx, coords) {
             return coords.map(c => ctx.ol.proj.transform(c, ctx.u.viewProjection, ctx.u.dataProjection));
         }
@@ -1688,6 +1795,16 @@
                     stopClick: true
                 });
 
+                // The saved line of this dimension (from an earlier visit).
+                const dim = current;
+                const showSaved = () => {
+                    const pts = placed.measure[dim];
+                    if (!pts || pts.length < 2) return null;
+                    const view = pts.map(p => ol.proj.transform(p, u.dataProjection, u.viewProjection));
+                    ctx.source.addFeature(new ol.Feature(new ol.geom.LineString(view)));
+                    return pts;
+                };
+
                 ctx.draw.on('drawstart', e => {
                     ctx.source.clear();
                     measureDrawing = true;
@@ -1696,14 +1813,18 @@
                 });
                 ctx.draw.on('drawend', e => {
                     measureDrawing = false;
-                    renderMeasure(toBlocks(ctx, e.feature.getGeometry().getCoordinates()));
+                    const pts = toBlocks(ctx, e.feature.getGeometry().getCoordinates());
+                    setPlaced('measure', dim, pts.map(p => [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]));
+                    ctx.saved = pts;
+                    renderMeasure(pts);
                 });
                 ctx.draw.on('drawabort', () => {
                     measureDrawing = false;
-                    renderMeasure(null);
+                    renderMeasure(showSaved()); // a new line was abandoned: the saved one comes back
                 });
 
                 u.olMap.addLayer(ctx.layer);
+                ctx.saved = showSaved();
                 u.olMap.addInteraction(ctx.draw);
                 u.olMap.getTargetElement().style.cursor = 'crosshair';
                 measureCtx = ctx;
@@ -1733,21 +1854,276 @@
         }
 
         function setMeasure(on) {
+            if (on && radiusActive) setRadius(false); // one map tool at a time
             measureActive = on;
             if (on) hideInfo();
             measureToggle.setAttribute('aria-pressed', String(on));
             if (on) measureAttach(); else measureDetach();
-            renderMeasure(null);
+            renderMeasure(measureCtx ? measureCtx.saved : null);
         }
 
         measureToggle.addEventListener('click', () => setMeasure(!measureActive));
         measureFinish.addEventListener('click', () => measureCtx && measureCtx.draw.finishDrawing());
         measureClear.addEventListener('click', () => {
             if (!measureCtx) return;
+            // Forget the saved line first, or aborting the drawing would bring it back.
+            setPlaced('measure', current, null);
+            measureCtx.saved = null;
             measureCtx.draw.abortDrawing();
             measureCtx.source.clear();
             measureDrawing = false;
             renderMeasure(null);
+        });
+
+        // ---- Farm radius ---------------------------------------------------
+        // Click sets a centre (the AFK spot); circles show the Bedrock spawn and
+        // despawn distances around it (minecraft.wiki, "Simulation distance"):
+        //   24  no natural spawning closer to the player (Euclidean)
+        //   32  mobs can despawn randomly from here
+        //   44  spawning and despawning limit at simulation distance 4
+        //   128 limit at simulation distance 6+, which also caps spawning at
+        //       n-1 chunks taxicab distance from the player's chunk (the diamond).
+        // All distances are spherical, so on the map they hold at the centre's height.
+
+        const RADIUS_KEY = 'map-renderer.radius';
+        const RADIUS_RINGS = [
+            { r: 24, color: '#e74c3c', text: 'no spawning closer' },
+            { r: 32, color: '#f1c40f', text: 'random despawn from here' },
+            { r: 44, color: '#2ecc71', text: 'spawn limit, simulation distance 4' },
+            { r: 128, color: '#3498db', text: 'spawn limit, simulation distance 6+' }
+        ];
+        const CUSTOM_COLOR = '#e056fd';
+
+        const radiusToggle = document.getElementById('radius-toggle');
+        const radiusPanel = document.getElementById('radius');
+        const radiusCentreEl = document.getElementById('radius-centre');
+        const radiusRings = document.getElementById('radius-rings');
+        const radiusSim = document.getElementById('radius-sim');
+
+        let radiusActive = false;
+        // Centre per dimension ({ x, z } in blocks), saved in this browser (placed.radius).
+        const radiusCentreHere = () => placed.radius[current] || null;
+        let radiusCtx = null;      // { u, ol, source, layer } of the loaded map
+        let radiusOptions = { on: [24, 44, 128], custom: 0, customOn: false, sim: 0 };
+        try { radiusOptions = { ...radiusOptions, ...JSON.parse(localStorage.getItem(RADIUS_KEY)) }; } catch (e) { /* ignore */ }
+
+        function saveRadiusOptions() {
+            try { localStorage.setItem(RADIUS_KEY, JSON.stringify(radiusOptions)); } catch (e) { /* ignore */ }
+        }
+
+        function activeRings() {
+            const rings = RADIUS_RINGS.filter(r => radiusOptions.on.includes(r.r));
+            if (radiusOptions.customOn && radiusOptions.custom > 0) {
+                rings.push({ r: radiusOptions.custom, color: CUSTOM_COLOR, text: 'own radius' });
+            }
+            return rings;
+        }
+
+        function renderRadiusPanel() {
+            const rc = radiusCentreHere();
+            if (rc) {
+                const cx = Math.floor(rc.x / 16), cz = Math.floor(rc.z / 16);
+                radiusCentreEl.textContent = 'Centre X ' + rc.x.toLocaleString() + ' · Z '
+                    + rc.z.toLocaleString() + ' (chunk ' + cx + ', ' + cz + ')';
+            } else {
+                radiusCentreEl.textContent = 'Click the map to set the centre (your AFK spot).';
+            }
+            const rows = RADIUS_RINGS.map(ring => {
+                const label = document.createElement('label');
+                label.className = 'ring';
+                const box = document.createElement('input');
+                box.type = 'checkbox';
+                box.checked = radiusOptions.on.includes(ring.r);
+                box.addEventListener('change', () => {
+                    radiusOptions.on = box.checked
+                        ? [...new Set([...radiusOptions.on, ring.r])]
+                        : radiusOptions.on.filter(r => r !== ring.r);
+                    saveRadiusOptions();
+                    drawRadius();
+                });
+                const line = document.createElement('span');
+                line.className = 'line';
+                line.style.setProperty('--ring-color', ring.color);
+                const value = document.createElement('b');
+                value.textContent = ring.r;
+                const text = document.createElement('span');
+                text.className = 'muted';
+                text.textContent = ring.text;
+                label.append(box, line, value, text);
+                return label;
+            });
+            // Own radius
+            const label = document.createElement('label');
+            label.className = 'ring';
+            const box = document.createElement('input');
+            box.type = 'checkbox';
+            box.checked = radiusOptions.customOn;
+            const line = document.createElement('span');
+            line.className = 'line';
+            line.style.setProperty('--ring-color', CUSTOM_COLOR);
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '1';
+            input.max = '2000';
+            input.placeholder = 'blocks';
+            input.value = radiusOptions.custom || '';
+            input.setAttribute('aria-label', 'Own radius in blocks');
+            const text = document.createElement('span');
+            text.className = 'muted';
+            text.textContent = 'own radius';
+            box.addEventListener('change', () => {
+                radiusOptions.customOn = box.checked;
+                saveRadiusOptions();
+                drawRadius();
+            });
+            input.addEventListener('input', () => {
+                radiusOptions.custom = Math.max(0, Math.min(2000, Math.round(Number(input.value) || 0)));
+                radiusOptions.customOn = radiusOptions.custom > 0;
+                box.checked = radiusOptions.customOn;
+                saveRadiusOptions();
+                drawRadius();
+            });
+            input.addEventListener('keydown', e => e.stopPropagation()); // digits must not switch dimensions
+            label.append(box, line, input, text);
+            rows.push(label);
+            radiusRings.replaceChildren(...rows);
+            radiusSim.value = String(radiusOptions.sim || 0);
+        }
+
+        // Outline of the chunks within `k` taxicab chunks of (cx, cz), as line segments.
+        function taxicabOutline(cx, cz, k) {
+            const inside = (x, z) => Math.abs(x - cx) + Math.abs(z - cz) <= k;
+            const lines = [];
+            for (let x = cx - k; x <= cx + k; x++) {
+                for (let z = cz - k; z <= cz + k; z++) {
+                    if (!inside(x, z)) continue;
+                    const x0 = x * 16, z0 = z * 16, x1 = x0 + 16, z1 = z0 + 16;
+                    if (!inside(x, z - 1)) lines.push([[x0, z0], [x1, z0]]);
+                    if (!inside(x, z + 1)) lines.push([[x0, z1], [x1, z1]]);
+                    if (!inside(x - 1, z)) lines.push([[x0, z0], [x0, z1]]);
+                    if (!inside(x + 1, z)) lines.push([[x1, z0], [x1, z1]]);
+                }
+            }
+            return lines;
+        }
+
+        function drawRadius() {
+            if (!radiusCtx) return;
+            const { u, ol, source } = radiusCtx;
+            source.clear();
+            renderRadiusPanel();
+            const rc = radiusCentreHere();
+            if (!rc) return;
+            const toView = b => ol.proj.transform(b, u.dataProjection, u.viewProjection);
+            const unit = blockUnit(u, ol);
+            const c = [rc.x + 0.5, rc.z + 0.5];
+            const centre = toView(c);
+            const features = [];
+            for (const ring of activeRings()) {
+                const circle = new ol.Feature(new ol.geom.Circle(centre, ring.r * unit));
+                circle.setStyle(new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: ring.color, width: 2.5 }),
+                    fill: ring.r === 24 ? new ol.style.Fill({ color: 'rgba(231, 76, 60, 0.12)' }) : undefined
+                }));
+                // Radius label on the north edge of the circle.
+                const label = new ol.Feature(new ol.geom.Point(toView([c[0], c[1] - ring.r])));
+                label.setStyle(new ol.style.Style({
+                    text: new ol.style.Text({
+                        text: String(ring.r),
+                        font: '700 12px -apple-system, "Segoe UI", Roboto, sans-serif',
+                        fill: new ol.style.Fill({ color: '#fff' }),
+                        stroke: new ol.style.Stroke({ color: ring.color, width: 4 }),
+                        offsetY: -1
+                    })
+                }));
+                features.push(circle, label);
+            }
+            const sim = Number(radiusOptions.sim) || 0;
+            if (sim > 4) {
+                const k = sim - 1;
+                const lines = taxicabOutline(Math.floor(rc.x / 16), Math.floor(rc.z / 16), k)
+                    .map(seg => seg.map(toView));
+                const diamond = new ol.Feature(new ol.geom.MultiLineString(lines));
+                diamond.setStyle(new ol.style.Style({
+                    // Orange, so it stands out from the white chunk grid.
+                    stroke: new ol.style.Stroke({ color: '#ff9f1a', width: 2.5, lineDash: [7, 5] })
+                }));
+                const label = new ol.Feature(new ol.geom.Point(toView([c[0], (Math.floor(rc.z / 16) - k) * 16])));
+                label.setStyle(new ol.style.Style({
+                    text: new ol.style.Text({
+                        text: 'spawn chunks, sim. distance ' + sim,
+                        font: '600 11px -apple-system, "Segoe UI", Roboto, sans-serif',
+                        fill: new ol.style.Fill({ color: '#fff' }),
+                        stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.85)', width: 3 }),
+                        offsetY: -10
+                    })
+                }));
+                features.push(diamond, label);
+            }
+            const dot = new ol.Feature(new ol.geom.Point(centre));
+            dot.setStyle(new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 5,
+                    fill: new ol.style.Fill({ color: '#fff' }),
+                    stroke: new ol.style.Stroke({ color: '#000', width: 2 })
+                })
+            }));
+            features.push(dot);
+            source.addFeatures(features);
+        }
+
+        function attachRadius() {
+            radiusCtx = null;
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            const source = new ol.source.Vector();
+            const layer = new ol.layer.Vector({ source, zIndex: 1900, visible: radiusActive });
+            u.olMap.addLayer(layer);
+            u.olMap.on('singleclick', e => {
+                if (!radiusActive) return;
+                const b = ol.proj.transform(e.coordinate, u.viewProjection, u.dataProjection);
+                setPlaced('radius', current, { x: Math.floor(b[0]), z: Math.floor(b[1]) });
+                drawRadius();
+            });
+            radiusCtx = { u, ol, source, layer };
+            if (radiusActive) u.olMap.getTargetElement().style.cursor = 'crosshair';
+            drawRadius();
+        }
+
+        function setRadius(on) {
+            radiusActive = on;
+            radiusPanel.hidden = !on;
+            radiusToggle.setAttribute('aria-pressed', String(on));
+            if (on) {
+                if (measureActive) setMeasure(false);
+                hideInfo();
+                renderRadiusPanel();
+            }
+            if (radiusCtx) {
+                radiusCtx.layer.setVisible(on);
+                radiusCtx.u.olMap.getTargetElement().style.cursor = on ? 'crosshair' : '';
+                drawRadius();
+            }
+        }
+
+        radiusToggle.addEventListener('click', () => setRadius(!radiusActive));
+        radiusSim.addEventListener('change', () => {
+            radiusOptions.sim = Number(radiusSim.value) || 0;
+            saveRadiusOptions();
+            drawRadius();
+        });
+        radiusSim.addEventListener('keydown', e => e.stopPropagation());
+        document.getElementById('radius-clear').addEventListener('click', () => {
+            setPlaced('radius', current, null);
+            drawRadius();
+        });
+        document.getElementById('radius-close').addEventListener('click', () => setRadius(false));
+        document.getElementById('radius-tp').addEventListener('click', () => {
+            const rc = radiusCentreHere();
+            if (!rc) return;
+            const cmd = '/tp @s ' + rc.x + ' ~ ' + rc.z;
+            if (navigator.clipboard) navigator.clipboard.writeText(cmd).catch(() => {});
         });
 
         // ---- Structures ------------------------------------------------
@@ -1929,7 +2305,7 @@
                     { layerFilter: l => l === ctx.layer, hitTolerance: 4 });
 
                 u.olMap.on('singleclick', e => {
-                    if (measureActive) return;
+                    if (measureActive || radiusActive) return; // the click belongs to the tool
                     const w = waypointAt(e.pixel); // waypoints are drawn on top
                     if (w) {
                         showWaypoint(w);
@@ -1944,7 +2320,7 @@
                 const target = u.olMap.getTargetElement();
                 const view = target.ownerDocument.defaultView;
                 u.olMap.on('pointermove', e => {
-                    if (measureActive || e.dragging) return;
+                    if (measureActive || radiusActive || e.dragging) return;
                     if (hoverPixel === null) {
                         view.requestAnimationFrame(() => {
                             const over = !measureActive && (waypointAt(hoverPixel) || hit(hoverPixel));
@@ -2785,6 +3161,115 @@
 
         slimeToggle.addEventListener('click', () => setSlime(!slimeOn));
 
+        // ---- Chunk and region grid -------------------------------------------
+        // Close up: chunk borders (16 blocks) with chunk coordinates; further
+        // out: region borders (512 blocks = 32 x 32 chunks). Drawn above slime
+        // chunks and the spawn diamond so they line up with farms.
+
+        const GRID_KEY = 'map-renderer.grid';
+        const gridToggle = document.getElementById('grid-toggle');
+        const GRID_CHUNKS_MAX_BPP = 1;      // chunk lines while a chunk is >= 16 screen px
+        const GRID_CHUNK_LABELS_MAX_BPP = 0.4;
+        const GRID_CORNER_LABELS_MAX_BPP = 0.16;
+        const GRID_REGIONS_MAX_BPP = 32;    // region lines while a region is >= 16 screen px
+        let gridOn = false;
+        try { gridOn = localStorage.getItem(GRID_KEY) === '1'; } catch (e) { /* ignore */ }
+        let gridLayer = null;               // { layer, u } of the loaded map
+
+        function attachGrid() {
+            gridLayer = null;
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            const doc = u.olMap.getTargetElement().ownerDocument;
+            const toBlock = c => ol.proj.transform(c, u.viewProjection, u.dataProjection);
+            const toView = b => ol.proj.transform(b, u.dataProjection, u.viewProjection);
+
+            const source = new ol.source.ImageCanvas({
+                ratio: 1.2,
+                canvasFunction: (extent, resolution, pixelRatio, imgSize) => {
+                    const canvas = doc.createElement('canvas');
+                    canvas.width = imgSize[0];
+                    canvas.height = imgSize[1];
+                    const a = toBlock([extent[0], extent[1]]);
+                    const b = toBlock([extent[2], extent[3]]);
+                    const bx0 = Math.min(a[0], b[0]), bx1 = Math.max(a[0], b[0]);
+                    const bz0 = Math.min(a[1], b[1]), bz1 = Math.max(a[1], b[1]);
+                    const bpp = (bx1 - bx0) / (imgSize[0] / pixelRatio); // blocks per screen pixel
+                    if (bpp > GRID_REGIONS_MAX_BPP) return canvas;
+                    const g = canvas.getContext('2d');
+                    const sx = imgSize[0] / (extent[2] - extent[0]);
+                    const sy = imgSize[1] / (extent[3] - extent[1]);
+                    // Canvas pixel of a block coordinate (the grid is axis-aligned).
+                    const px = bx => (toView([bx, 0])[0] - extent[0]) * sx;
+                    const pz = bz => (extent[3] - toView([0, bz])[1]) * sy;
+                    const crisp = (v, w) => Math.round(v) + (w % 2 ? 0.5 : 0);
+
+                    function lines(step, color, width) {
+                        g.beginPath();
+                        for (let x = Math.ceil(bx0 / step) * step; x <= bx1; x += step) {
+                            const p = crisp(px(x), width);
+                            g.moveTo(p, 0);
+                            g.lineTo(p, canvas.height);
+                        }
+                        for (let z = Math.ceil(bz0 / step) * step; z <= bz1; z += step) {
+                            const p = crisp(pz(z), width);
+                            g.moveTo(0, p);
+                            g.lineTo(canvas.width, p);
+                        }
+                        g.strokeStyle = color;
+                        g.lineWidth = width;
+                        g.stroke();
+                    }
+
+                    function labels(step, text, size) {
+                        g.font = '600 ' + size + 'px -apple-system, "Segoe UI", Roboto, sans-serif';
+                        g.textBaseline = 'top';
+                        g.lineJoin = 'round';
+                        g.lineWidth = 3 * pixelRatio;
+                        g.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+                        g.fillStyle = '#fff';
+                        const pad = 3 * pixelRatio;
+                        for (let x = Math.floor(bx0 / step) * step; x <= bx1; x += step) {
+                            for (let z = Math.floor(bz0 / step) * step; z <= bz1; z += step) {
+                                const t = text(x, z);
+                                const lx = Math.min(px(x), px(x + step)) + pad;
+                                const lz = Math.min(pz(z), pz(z + step)) + pad;
+                                g.strokeText(t, lx, lz);
+                                g.fillText(t, lx, lz);
+                            }
+                        }
+                    }
+
+                    if (bpp <= GRID_CHUNKS_MAX_BPP) {
+                        lines(16, 'rgba(255, 255, 255, 0.45)', Math.max(1, Math.round(pixelRatio)));
+                    }
+                    lines(512, 'rgba(255, 210, 60, 0.9)', 2 * Math.max(1, Math.round(pixelRatio)));
+                    if (bpp <= GRID_CHUNK_LABELS_MAX_BPP) {
+                        const corner = bpp <= GRID_CORNER_LABELS_MAX_BPP;
+                        labels(16, (x, z) => 'chunk ' + x / 16 + ', ' + z / 16 + (corner ? '  (' + x + ', ' + z + ')' : ''),
+                            11 * pixelRatio);
+                    } else if (bpp <= GRID_REGIONS_MAX_BPP / 2) {
+                        labels(512, (x, z) => 'region ' + x / 512 + ', ' + z / 512, 12 * pixelRatio);
+                    }
+                    return canvas;
+                }
+            });
+            const layer = new ol.layer.Image({ source, zIndex: 1150, visible: gridOn });
+            u.olMap.addLayer(layer);
+            gridLayer = { layer, u };
+        }
+
+        function setGrid(on) {
+            gridOn = on;
+            try { localStorage.setItem(GRID_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            gridToggle.setAttribute('aria-pressed', String(on));
+            if (gridLayer) gridLayer.layer.setVisible(on);
+        }
+
+        gridToggle.setAttribute('aria-pressed', String(gridOn));
+        gridToggle.addEventListener('click', () => setGrid(!gridOn));
+
         // ---- Waypoints (markers/markers.json) --------------------------------
         // Own places (bases, farms, shops) kept in markers.json, outside the map:
         // markers/markers.json (a folder mounted from the host, MARKERS_DIR), or
@@ -3138,7 +3623,9 @@
             }
 
             measureAttach();
-            renderMeasure(null);
+            renderMeasure(measureCtx ? measureCtx.saved : null);
+            attachRadius();
+            attachGrid();
             attachBiomeHover();
             const loadedWindow = frame.contentWindow;
             waypointCtx = null;
@@ -3191,10 +3678,16 @@
                 setStatsPanel(statsPanel.hidden);
             } else if (e.key === 'b' || e.key === 'B') {
                 toggleBiomes();
+            } else if (e.key === 'g' || e.key === 'G') {
+                setGrid(!gridOn);
             } else if ((e.key === 'k' || e.key === 'K') && !slimeToggle.hidden) {
                 setSlime(!slimeOn);
             } else if ((e.key === 'c' || e.key === 'C') && !cavesToggle.hidden) {
                 setCaveMode(!caveMode);
+            } else if (e.key === 'r' || e.key === 'R') {
+                setRadius(!radiusActive);
+            } else if (e.key === 'Escape' && radiusActive) {
+                setRadius(false);
             } else if (e.key === 'f' || e.key === 'F' || e.key === '/') {
                 e.preventDefault(); // don't type the key into the search box
                 setSearchPanel(true);

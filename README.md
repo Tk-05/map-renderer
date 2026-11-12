@@ -476,6 +476,8 @@ map.example.com {
 | `I`             | Statistics (world size, chunks, regions, last render)                                     |
 | `B`             | Biome map with legend (only shown if rendered with `--biomes`); press again to switch off. Hover or tap shows the biome (Bedrock) |
 | `M`             | Measure distance. `Backspace` removes the last point, `Esc` cancels.                      |
+| `R`             | Farm radius: spawn and despawn circles around a point (see below)                         |
+| `G`             | Chunk and region grid                                                                     |
 | `Esc`           | Close the info panel                                                                      |
 
 **Search** (magnifier button, `F` or `/`) measures from the map centre, marked with a
@@ -498,6 +500,35 @@ the map) brings the search back with the same results, the visited one selected,
 `↓` + `Enter` goes to the next one. Distances stay measured from where you searched;
 **Measure from here** switches to the current map centre. `Esc` in the search box ends
 the search.
+
+**Farm radius** (target button, `R`): click the map to set the centre, e.g. the AFK
+spot of a mob farm. Circles show the Bedrock distances around it (from the Minecraft
+Wiki, "Simulation distance"):
+
+| Circle | Meaning (Bedrock) |
+| --- | --- |
+| 24 | no natural spawning closer to the player |
+| 32 | mobs can despawn randomly from here on |
+| 44 | spawning and despawning limit at simulation distance 4 (the default) |
+| 128 | limit at simulation distance 6 and more |
+| own | any radius you enter |
+
+At simulation distance 6+, Bedrock also spawns mobs only within *n − 1* chunks
+(taxicab distance) of the player's chunk; choose the simulation distance to draw that
+diamond of chunks. It is usually smaller than the 128 circle, so it is what limits a
+farm. All distances are spherical, so the circles hold at the centre's height and the
+area shrinks above and below it. **Copy /tp** copies a teleport to the centre. The
+chosen circles are remembered in the browser.
+
+**Chunk and region grid** (grid button, `G`): close up, chunk borders (16 blocks) with
+the chunk coordinates in each chunk, and when zoomed in further also the block
+coordinates of its corner; further out, region borders (512 blocks = 32 × 32 chunks)
+in yellow with region coordinates. It lines up with slime chunks and the spawn diamond
+of the farm radius, works in every dimension and map, and is remembered in the browser.
+
+**Placed things are kept:** the radius centre and the last measured line are saved in
+your browser, per dimension, and are back when you open the tool again, also after a
+reload. **Clear** removes them. They are not shared with other visitors.
 
 **Slime chunks** (slime button, `K`): in Bedrock, slime chunks depend only on the chunk
 coordinates, not on the seed, so the map can show them exactly without revealing the
