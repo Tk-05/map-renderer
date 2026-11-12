@@ -491,6 +491,143 @@
 
         #info .coords { font-variant-numeric: tabular-nums; }
 
+        /* Search: coordinates, structures, biomes */
+        #search {
+            top: 64px;
+            left: 8px;
+            width: 340px;
+            padding: 8px;
+        }
+
+        #search-input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #search-input:focus { border-color: #fff; }
+        #search-input::placeholder { color: #8a8a94; }
+
+        #search-origin { margin: 6px 2px 2px; }
+
+        #search-origin .link {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: #b9adff;
+            font: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #search-origin .link:hover { color: #fff; }
+
+        #search-results {
+            margin: 4px 0 0;
+            padding: 0;
+            list-style: none;
+            max-height: min(420px, calc(100vh - 200px));
+            overflow-y: auto;
+        }
+
+        #search-results li {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 6px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.14); }
+        #search-results li.note { cursor: default; color: #9a9aa4; }
+        #search-results .text { min-width: 0; flex: 1; }
+        #search-results .title { color: #fff; font-weight: 600; }
+        #search-results .detail { color: #9a9aa4; font-size: 12px; font-variant-numeric: tabular-nums; }
+        #search-results .dim-tag { color: #c8b6ff; }
+
+        #search-results .result-icon {
+            display: inline-grid;
+            place-items: center;
+            width: 20px;
+            height: 20px;
+            flex: none;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        #search-results .swatch {
+            width: 16px;
+            height: 16px;
+            margin: 0 2px;
+            border-radius: 3px;
+            background: var(--biome-color);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+            flex: none;
+        }
+
+        #search-results .action {
+            padding: 3px 7px;
+            border: 0;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            flex: none;
+        }
+
+        #search-results .action:hover { background: rgba(255, 255, 255, 0.2); }
+
+        #search-toggle { --accent: #6a5acd; }
+        #slime-toggle  { --accent: #4e9a3c; }
+        #caves-toggle  { --accent: #8a6d3b; }
+
+        /* Short notice at the bottom, e.g. "zoom in to see slime chunks" */
+        #map-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(20, 20, 24, 0.88);
+            color: #d6d6dc;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        #map-hint[hidden] { display: none; }
+
+        /* Marks the map centre ("from here") while the search is open */
+        #search-crosshair {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 5;
+            width: 22px;
+            height: 22px;
+            margin: -11px 0 0 -11px;
+            pointer-events: none;
+            background:
+                linear-gradient(#fff, #fff) center / 2px 100% no-repeat,
+                linear-gradient(#fff, #fff) center / 100% 2px no-repeat;
+            filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9));
+            opacity: 0.85;
+        }
+
+        #search-crosshair[hidden] { display: none; }
+
         /* Measurement result */
         #measure {
             position: absolute;
@@ -588,6 +725,10 @@
                 max-height: calc(100vh - 200px);
             }
 
+            #search {
+                width: calc(100vw - 74px);
+            }
+
             #info {
                 bottom: 92px;
                 width: calc(100vw - 32px);
@@ -604,6 +745,13 @@
     </nav>
 
     <div id="tools" role="toolbar" aria-label="Tools" aria-orientation="vertical">
+        <button type="button" id="search-toggle" aria-pressed="false" aria-controls="search"
+            aria-label="Search" title="Search coordinates, structures, biomes (key F or /)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <circle cx="6.8" cy="6.8" r="4.6" />
+                <path d="M10.3 10.3l4.2 4.2" stroke-linecap="round" />
+            </svg>
+        </button>
         <button type="button" id="structures-toggle" aria-pressed="false" aria-controls="structures"
             aria-label="Structures" title="Structures (key S)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -623,6 +771,21 @@
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <path d="M2.5 13.5c0-6.5 4.5-11 11-11 0 6.5-4.5 11-11 11z" />
                 <path d="M2.5 13.5l6-6" stroke-linecap="round" />
+            </svg>
+        </button>
+        <button type="button" id="caves-toggle" aria-pressed="false" hidden
+            aria-label="Cave map" title="Cave map, Overworld (key C)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M1.5 13.5h13" stroke-linecap="round" />
+                <path d="M2.5 13.5c0-5 2.4-9 5.5-9s5.5 4 5.5 9" />
+                <path d="M6 13.5c0-2.2.9-4 2-4s2 1.8 2 4" />
+            </svg>
+        </button>
+        <button type="button" id="slime-toggle" aria-pressed="false" hidden
+            aria-label="Slime chunks" title="Slime chunks (key K, Overworld)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <rect x="2.5" y="3.5" width="11" height="10" rx="2.5" />
+                <path d="M5.5 7.5v1.2M10.5 7.5v1.2M6.5 11h3" stroke-linecap="round" />
             </svg>
         </button>
         <button type="button" id="measure-toggle" aria-pressed="false"
@@ -669,6 +832,16 @@
         </div>
     </section>
 
+    <section id="search" class="panel" aria-label="Search" hidden>
+        <input id="search-input" type="search" autocomplete="off" spellcheck="false"
+            placeholder="X Z, structure or biome" aria-label="Search coordinates, structures or biomes"
+            aria-controls="search-results" aria-autocomplete="list">
+        <div class="muted" id="search-origin"></div>
+        <ul id="search-results" role="listbox" aria-label="Results"></ul>
+    </section>
+    <div id="search-crosshair" hidden></div>
+    <div id="map-hint" role="status" hidden></div>
+
     <div id="biome-tip" role="status" hidden><span class="swatch"></span><span class="name"></span></div>
 
     <section id="info" class="panel" aria-live="polite" hidden>
@@ -678,6 +851,7 @@
         <div class="actions">
             <button type="button" id="info-go"></button>
             <button type="button" id="info-tp">Copy /tp</button>
+            <button type="button" id="info-wp" title="Copy this place as an entry for markers.json">Copy waypoint</button>
             <button type="button" id="info-close">Close</button>
         </div>
     </section>
@@ -824,7 +998,62 @@
         try { biomeMode = localStorage.getItem(BIOME_MODE_KEY) === '1'; } catch (e) { /* ignore */ }
 
         const hasBiomeMap = dim => Boolean(biomeDoc && biomeDoc.dimensions && biomeDoc.dimensions[dim]);
-        const mapPath = dim => (biomeMode && hasBiomeMap(dim) ? 'map/' + dim + '-biomes/index.html' : DIMENSIONS[dim].path);
+
+        // ---- Cave map --------------------------------------------------------
+        // map-renderer --caves renders map/overworld-caves/: the Overworld with
+        // everything above a fixed height left out (caves, ancient cities, deep
+        // dark). map/caves.json says which dimensions have one and from which y.
+        // Biome map and cave map are alternatives; switching one on switches the
+        // other off.
+
+        const CAVE_MODE_KEY = 'map-renderer.cave-mode';
+        const cavesToggle = document.getElementById('caves-toggle');
+        let caveDoc = null;
+        let caveMode = false;
+        try { caveMode = localStorage.getItem(CAVE_MODE_KEY) === '1'; } catch (e) { /* ignore */ }
+        const hasCaveMap = dim => Boolean(caveDoc && caveDoc.dimensions && caveDoc.dimensions[dim]);
+
+        function mapPath(dim) {
+            if (caveMode && hasCaveMap(dim)) return 'map/' + dim + '-caves/index.html';
+            if (biomeMode && hasBiomeMap(dim)) return 'map/' + dim + '-biomes/index.html';
+            return DIMENSIONS[dim].path;
+        }
+
+        const cavesLoaded = fetch('map/caves.json', { cache: 'no-cache' })
+            .then(r => (r.ok ? r.json() : null))
+            .catch(() => null)
+            .then(doc => {
+                caveDoc = doc && doc.dimensions && Object.keys(doc.dimensions).length ? doc : null;
+                updateCaveUi();
+                if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
+            });
+
+        function updateCaveUi() {
+            cavesToggle.hidden = !hasCaveMap(current); // only where a cave map exists
+            const shown = caveMode && hasCaveMap(current);
+            cavesToggle.setAttribute('aria-pressed', String(caveMode && !!caveDoc));
+            const top = caveDoc && caveDoc.dimensions.overworld && caveDoc.dimensions.overworld.topY;
+            cavesToggle.title = 'Cave map' + (top !== undefined ? ' (y = ' + top + ' and below)' : '')
+                + ', Overworld (key C)';
+            updateMapHint(shown ? 'Cave map: y = ' + caveDoc.dimensions[current].topY + ' and below' : null);
+        }
+
+        function setCaveMode(on) {
+            caveMode = on;
+            try { localStorage.setItem(CAVE_MODE_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            if (on && biomeMode) {
+                // The biome map is the other alternative: off, without loading it first.
+                biomeMode = false;
+                try { localStorage.setItem(BIOME_MODE_KEY, '0'); } catch (e) { /* ignore */ }
+                biomesToggle.setAttribute('aria-pressed', 'false');
+                hideBiomeTip();
+                setBiomesPanel(false);
+            }
+            updateCaveUi();
+            if (current && frame.getAttribute('src') !== mapPath(current)) reloadMap();
+        }
+
+        cavesToggle.addEventListener('click', () => setCaveMode(!caveMode));
 
         const biomesLoaded = fetch('map/biomes.json', { cache: 'no-cache' })
             .then(r => (r.ok ? r.json() : null))
@@ -1250,6 +1479,11 @@
         function setBiomeMode(on) {
             biomeMode = on;
             try { localStorage.setItem(BIOME_MODE_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            if (on && caveMode) {
+                caveMode = false;
+                try { localStorage.setItem(CAVE_MODE_KEY, '0'); } catch (e) { /* ignore */ }
+                updateCaveUi();
+            }
             biomesToggle.setAttribute('aria-pressed', String(on));
             if (!on) hideBiomeTip();
             setBiomesPanel(on);
@@ -1696,8 +1930,13 @@
 
                 u.olMap.on('singleclick', e => {
                     if (measureActive) return;
+                    const w = waypointAt(e.pixel); // waypoints are drawn on top
+                    if (w) {
+                        showWaypoint(w);
+                        return;
+                    }
                     const s = hit(e.pixel);
-                    if (s) showInfo(s); else hideInfo();
+                    if (s) showInfo(s); else closeInfo();
                 });
 
                 // Hover cursor: at most one hit test per frame.
@@ -1708,7 +1947,7 @@
                     if (measureActive || e.dragging) return;
                     if (hoverPixel === null) {
                         view.requestAnimationFrame(() => {
-                            const over = !measureActive && hit(hoverPixel);
+                            const over = !measureActive && (waypointAt(hoverPixel) || hit(hoverPixel));
                             target.style.cursor = over ? 'pointer' : '';
                             hoverPixel = null;
                         });
@@ -1737,6 +1976,7 @@
 
         function refreshStructures() {
             if (structCtx) structCtx.layer.changed();
+            if (waypointCtx) waypointCtx.layer.setVisible(!hiddenTypes.has(WAYPOINT_TYPE));
         }
 
         function saveHiddenTypes() {
@@ -1768,6 +2008,13 @@
 
             structuresList.replaceChildren();
             const types = Object.keys(counts).sort((a, b) => labels[a].localeCompare(labels[b]));
+            // Own waypoints (markers.json) first.
+            const ownCount = waypointsIn(current).length;
+            if (ownCount) {
+                types.unshift(WAYPOINT_TYPE);
+                counts[WAYPOINT_TYPE] = ownCount;
+                labels[WAYPOINT_TYPE] = 'Waypoints';
+            }
             updateAllButton(types);
             for (const type of types) {
                 const row = document.createElement('label');
@@ -1782,8 +2029,9 @@
                 });
                 const iconEl = document.createElement('span');
                 iconEl.className = 'type-icon';
-                iconEl.style.setProperty('--type-color', typeInfo(type).color);
-                iconEl.textContent = typeInfo(type).icon;
+                const look = type === WAYPOINT_TYPE ? { icon: '📍', color: '#e74c3c' } : typeInfo(type);
+                iconEl.style.setProperty('--type-color', look.color);
+                iconEl.textContent = look.icon;
                 const name = document.createElement('span');
                 name.textContent = labels[type];
                 const count = document.createElement('span');
@@ -1859,6 +2107,9 @@
                 const cmd = '/tp @s ' + s.x + ' ' + s.y + ' ' + s.z;
                 if (navigator.clipboard) navigator.clipboard.writeText(cmd).catch(() => {});
             };
+            const wp = document.getElementById('info-wp');
+            wp.hidden = false;
+            wp.onclick = () => copyWaypoint({ title: s.label, x: s.x, y: s.y, z: s.z }, s.dim);
 
             infoPanel.hidden = false;
         }
@@ -1868,7 +2119,43 @@
             if (selectedId) {
                 selectedId = null;
                 refreshStructures();
+                if (waypointCtx) waypointCtx.layer.changed();
             }
+        }
+
+        // Closed by the user (Close, Esc, click on the map): if the entry was
+        // opened from the search, go back to its results.
+        function closeInfo() {
+            const wasOpen = !infoPanel.hidden;
+            hideInfo();
+            if (wasOpen && searchReturn && searchPanel.hidden) setSearchPanel(true);
+        }
+
+        // Info panel for a searched place without a structure (coordinates, biome).
+        function showPlaceInfo(place) {
+            hideInfo();
+            const iconEl = document.getElementById('info-icon');
+            iconEl.textContent = place.icon || '';
+            iconEl.style.setProperty('--type-color', place.color || '#6a5acd');
+            document.getElementById('info-title').textContent = place.title;
+            document.getElementById('info-coords').textContent = 'X ' + place.x.toLocaleString()
+                + (place.y !== undefined ? ' · Y ' + place.y.toLocaleString() : '') + ' · Z ' + place.z.toLocaleString();
+            document.getElementById('info-details').replaceChildren(...(place.details || []).map(text => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div;
+            }));
+            const go = document.getElementById('info-go');
+            go.hidden = true;
+            go.onclick = null;
+            document.getElementById('info-tp').onclick = () => {
+                const cmd = '/tp @s ' + place.x + ' ' + (place.y !== undefined ? place.y : '~') + ' ' + place.z;
+                if (navigator.clipboard) navigator.clipboard.writeText(cmd).catch(() => {});
+            };
+            const wp = document.getElementById('info-wp');
+            wp.hidden = place.waypoint === false;
+            wp.onclick = () => copyWaypoint(place, current);
+            infoPanel.hidden = false;
         }
 
         function goTo(dim, x, z, id) {
@@ -1881,6 +2168,778 @@
             }
             pendingSelectId = id;
             select(dim, { view: { x, z } });
+        }
+
+        // ---- Search ------------------------------------------------------
+        // One box for coordinates ("120 -340", "120 64 -340", a pasted /tp),
+        // structures (nearest of a type from the map centre) and biomes
+        // (nearest occurrence, from the biome lookup data). Empty: nearest
+        // notable structures from here.
+
+        const searchToggle = document.getElementById('search-toggle');
+        const searchPanel = document.getElementById('search');
+        const searchInput = document.getElementById('search-input');
+        const searchOrigin = document.getElementById('search-origin');
+        const searchResults = document.getElementById('search-results');
+        const searchCrosshair = document.getElementById('search-crosshair');
+
+        // Shown first for an empty search, in this order (if present in the dimension).
+        const NOTABLE_TYPES = ['village', 'stronghold', 'ancient_city', 'trial_chamber', 'ocean_monument',
+            'woodland_mansion', 'nether_portal', 'fortress', 'bastion', 'end_city', 'end_gateway', 'exit_portal'];
+
+        let searchItems = [];   // { title, detail, icon, run, action? } of the shown results
+        let searchSelected = 0;
+        let searchToken = 0;
+        let searchPin = null;   // { ol, u, source } marker layer of the loaded map
+        let pendingPin = null;  // { x, z, place } to show after a dimension switch
+        // After jumping to a result: the search to return to when the entry is
+        // closed, and the fixed point distances are measured from meanwhile.
+        let searchReturn = null; // { query, selected }
+        let searchFrom = null;   // { dim, x, z }
+        let searchSelectAfter = null;
+
+        const fmtCoord = n => Math.round(n).toLocaleString();
+
+        function compass(dx, dz) {
+            if (Math.abs(dx) < 1 && Math.abs(dz) < 1) return 'here';
+            const dirs = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE']; // +z is south
+            return dirs[(Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) + 8) % 8];
+        }
+
+        function distanceText(from, x, z) {
+            const d = Math.hypot(x - from.x, z - from.z);
+            const dist = d >= 10000 ? (d / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'k' : fmtCoord(d);
+            return dist + ' blocks ' + compass(x - from.x, z - from.z);
+        }
+
+        // Centre of the current map, and the same spot converted to another dimension.
+        function searchOriginIn(dim) {
+            const v = searchFrom || (readView() && { dim: current, ...readView() });
+            if (!v) return { x: 0, z: 0 };
+            const a = DIMENSIONS[v.dim].scale, b = DIMENSIONS[dim].scale;
+            if (dim === v.dim) return { x: v.x, z: v.z };
+            if (!a || !b) return { x: 0, z: 0 };
+            return { x: v.x * a / b, z: v.z * a / b };
+        }
+
+        // Before jumping to a result: remember the search to come back to.
+        function runSearchItem(item) {
+            if (!item || !item.run) return;
+            searchReturn = { query: searchInput.value, selected: searchSelected };
+            if (!searchFrom) searchFrom = { dim: current, ...searchOriginIn(current) };
+            item.run();
+        }
+
+        // Pin marking a searched coordinate / biome spot (structures get their info panel instead).
+        function showPin(x, z) {
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            if (!searchPin || searchPin.u !== u) {
+                const source = new ol.source.Vector();
+                const style = [
+                    new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 11,
+                            stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.7)', width: 5 })
+                        })
+                    }),
+                    new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 11,
+                            fill: new ol.style.Fill({ color: 'rgba(106, 90, 205, 0.25)' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 2.5 })
+                        })
+                    })
+                ];
+                u.olMap.addLayer(new ol.layer.Vector({ source, style, zIndex: 1600 }));
+                searchPin = { u, source };
+            }
+            const point = ol.proj.transform([x + 0.5, z + 0.5], u.dataProjection, u.viewProjection);
+            searchPin.source.clear();
+            searchPin.source.addFeature(new ol.Feature(new ol.geom.Point(point)));
+        }
+
+        // `place`: what the info panel shows there (closing it returns to the search).
+        function jumpTo(dim, x, z, place) {
+            hideInfo();
+            setSearchPanel(false, { keepSession: true });
+            if (dim === current) {
+                const u = getUnmined();
+                if (u) u.center([x, z]);
+                showPin(x, z);
+                if (place) showPlaceInfo({ ...place, x, z });
+            } else {
+                pendingPin = { x, z, place };
+                select(dim, { view: { x, z } });
+            }
+        }
+
+        // Search results for waypoints matching `test`, nearest first (current dimension first).
+        function waypointSearchItems(test, from) {
+            return waypoints.filter(test).map(w => {
+                const origin = w.dim === current ? from : searchOriginIn(w.dim);
+                const comparable = w.dim === current || (DIMENSIONS[current].scale && DIMENSIONS[w.dim].scale);
+                return { w, origin, d: comparable ? Math.hypot(w.x - origin.x, w.z - origin.z) : Infinity };
+            }).sort((a, b) => (a.w.dim !== current) - (b.w.dim !== current) || a.d - b.d).map(({ w, origin, d }) => ({
+                title: w.name,
+                detail: (isFinite(d) ? distanceText(origin, w.x, w.z) + ' · ' : '') + fmtCoord(w.x) + ', ' + fmtCoord(w.z)
+                    + (w.description ? ' · ' + w.description : ''),
+                dimTag: w.dim !== current ? DIMENSIONS[w.dim].label : null,
+                icon: { text: w.icon, color: w.color },
+                run: () => goToWaypoint(w)
+            }));
+        }
+
+        // Nearest structures of `types` in `dim` from `from`.
+        function nearestStructures(dim, types, from, limit) {
+            return structuresIn(dim)
+                .filter(s => types.has(s.type))
+                .map(s => ({ s, d: Math.hypot(s.x - from.x, s.z - from.z) }))
+                .sort((a, b) => a.d - b.d)
+                .slice(0, limit);
+        }
+
+        function structureItem(s, from) {
+            const t = typeInfo(s.type);
+            const other = s.dim !== current;
+            return {
+                title: s.label,
+                detail: distanceText(from, s.x, s.z) + ' · ' + fmtCoord(s.x) + ', ' + fmtCoord(s.z),
+                dimTag: other ? DIMENSIONS[s.dim].label : null,
+                icon: { text: t.icon, color: t.color },
+                run: () => {
+                    setSearchPanel(false, { keepSession: true });
+                    goTo(s.dim, s.x, s.z, s.id);
+                }
+            };
+        }
+
+        // Nearest occurrence of a biome (by lookup value), searched in the
+        // overview tiles (1 value per chunk), nearest tiles first.
+        async function nearestBiome(dim, value, from) {
+            const index = await biomeIndex(dim);
+            if (!index || !index.overview) return null;
+            const { size, pixels } = index.overview;
+            const tiles = [...index.overview.tiles].map(key => {
+                const [gx, gz] = key.split(':').map(Number);
+                const dx = Math.max(gx * size - from.x, 0, from.x - (gx + 1) * size);
+                const dz = Math.max(gz * size - from.z, 0, from.z - (gz + 1) * size);
+                return { gx, gz, d: Math.hypot(dx, dz) };
+            }).sort((a, b) => a.d - b.d);
+            let best = null;
+            for (const tile of tiles) {
+                if (best && tile.d >= best.d) break;
+                const data = await biomeOverview(dim, tile.gx, tile.gz);
+                if (!data) continue;
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i] !== value) continue;
+                    const x = (tile.gx * pixels + i % pixels) * 16 + 8;
+                    const z = (tile.gz * pixels + Math.floor(i / pixels)) * 16 + 8;
+                    const d = Math.hypot(x - from.x, z - from.z);
+                    if (!best || d < best.d) best = { x, z, d };
+                }
+            }
+            return best;
+        }
+
+        // Show only this biome on the biome map.
+        function highlightOnlyBiome(dim, biome) {
+            const ids = (biomeDoc.dimensions[dim] || []).map(b => b.id);
+            if (!biomeMode) setBiomeMode(true);
+            setBiomesHidden(ids.filter(id => id !== biome.id), true);
+            setBiomesHidden([biome.id], false);
+        }
+
+        function parseCoordinates(q) {
+            const m = q.trim().replace(/^\/?tp\s+(@\w+|\S+)\s+/i, '')
+                .match(/^(~?-?\d+(?:\.\d+)?)[\s,;]+(~?-?\d+(?:\.\d+)?)(?:[\s,;]+(~?-?\d+(?:\.\d+)?))?$/);
+            if (!m || [m[1], m[2], m[3]].some(v => v && v.startsWith('~'))) return null;
+            const nums = [m[1], m[2], m[3]].filter(Boolean).map(Number);
+            return nums.length === 3 ? { x: nums[0], y: nums[1], z: nums[2] } : { x: nums[0], z: nums[1] };
+        }
+
+        const norm = text => text.toLowerCase().replace(/_/g, ' ').trim();
+
+        // Structure types and biomes of all dimensions, for matching names.
+        function searchableTypes() {
+            const types = new Map(); // type -> { label, dims: Set }
+            for (const dim of Object.keys(DIMENSIONS)) {
+                for (const s of structuresIn(dim)) {
+                    if (!types.has(s.type)) types.set(s.type, { label: s.label, dims: new Set() });
+                    types.get(s.type).dims.add(dim);
+                }
+            }
+            return types;
+        }
+
+        async function updateSearch() {
+            const token = ++searchToken;
+            const q = searchInput.value;
+            const query = norm(q);
+            const from = searchOriginIn(current);
+            renderSearchOrigin(from);
+            const items = [];
+
+            const coords = parseCoordinates(q);
+            if (coords) {
+                const place = { title: 'Coordinates', icon: '⌖', y: coords.y };
+                items.push({
+                    title: 'Go to ' + fmtCoord(coords.x) + ', ' + fmtCoord(coords.z),
+                    detail: DIMENSIONS[current].label + ' · ' + distanceText(from, coords.x, coords.z),
+                    icon: { text: '⌖' },
+                    run: () => jumpTo(current, coords.x, coords.z, place)
+                });
+                // The same spot in the linked dimension (Overworld 8:1 Nether).
+                for (const dim of ['overworld', 'nether']) {
+                    if (dim === current || !DIMENSIONS[current].scale) continue;
+                    const f = DIMENSIONS[current].scale / DIMENSIONS[dim].scale;
+                    const x = Math.round(coords.x * f), z = Math.round(coords.z * f);
+                    items.push({
+                        title: 'Go to ' + fmtCoord(x) + ', ' + fmtCoord(z),
+                        detail: 'Same spot in the ' + DIMENSIONS[dim].label + (f < 1 ? ' (÷8)' : ' (×8)'),
+                        dimTag: DIMENSIONS[dim].label,
+                        icon: { text: '⌖' },
+                        run: () => jumpTo(dim, x, z, {
+                            title: 'Coordinates', icon: '⌖',
+                            details: ['Same spot as ' + fmtCoord(coords.x) + ', ' + fmtCoord(coords.z)
+                                + ' in the ' + DIMENSIONS[current].label]
+                        })
+                    });
+                }
+            } else if (!query) {
+                // Own waypoints first, then the nearest notable structures from here.
+                items.push(...waypointSearchItems(w => w.dim === current, from).slice(0, 5));
+                const present = new Set(structuresIn(current).map(s => s.type));
+                for (const type of NOTABLE_TYPES.filter(t => present.has(t))) {
+                    const [hit] = nearestStructures(current, new Set([type]), from, 1);
+                    if (hit) items.push({ ...structureItem(hit.s, from), title: 'Nearest ' + hit.s.label });
+                }
+                if (!items.length) items.push({ note: 'Type coordinates like 120 -340, a structure or a biome.' });
+            } else {
+                // Own waypoints by name or description.
+                items.push(...waypointSearchItems(w =>
+                    norm(w.name).includes(query) || norm(w.description).includes(query), from));
+
+                // Structures: nearest of each matching type (current dimension first).
+                const matching = [...searchableTypes()].filter(([type, t]) =>
+                    norm(t.label).includes(query) || norm(type).includes(query));
+                const single = matching.length === 1;
+                for (const [type, t] of matching.sort((a, b) => b[1].dims.has(current) - a[1].dims.has(current))) {
+                    const dims = [...t.dims].sort((a, b) => (b === current) - (a === current));
+                    for (const dim of dims) {
+                        const hits = nearestStructures(dim, new Set([type]), searchOriginIn(dim), single && dim === current ? 5 : 1);
+                        hits.forEach((hit, i) => items.push({
+                            ...structureItem(hit.s, searchOriginIn(dim)),
+                            title: (i === 0 ? 'Nearest ' : '') + hit.s.label + (i > 0 ? ' #' + (i + 1) : '')
+                        }));
+                        if (!DIMENSIONS[current].scale) break; // from the End, other dimensions have no "here"
+                    }
+                }
+
+                // Biomes: nearest occurrence (Bedrock lookup data), found asynchronously.
+                if (biomeDoc && biomeDoc.lookup) {
+                    for (const dim of Object.keys(biomeDoc.lookup).sort((a, b) => (b === current) - (a === current))) {
+                        if (dim !== current && (!DIMENSIONS[current].scale || !DIMENSIONS[dim].scale)) continue;
+                        for (const b of biomeDoc.dimensions[dim] || []) {
+                            if (!norm(b.name).includes(query) && !norm(b.id.split(':').pop()).includes(query)) continue;
+                            const item = {
+                                title: b.name,
+                                detail: 'Searching …',
+                                dimTag: dim !== current ? DIMENSIONS[dim].label : null,
+                                icon: { swatch: b.color },
+                                run: null,
+                                action: { label: 'Highlight', title: 'Show only this biome on the biome map',
+                                          run: () => highlightOnlyBiome(dim, b) }
+                            };
+                            items.push(item);
+                            const origin = searchOriginIn(dim);
+                            nearestBiome(dim, b.value, origin).then(hit => {
+                                if (token !== searchToken) return;
+                                if (hit) {
+                                    item.title = 'Nearest ' + b.name;
+                                    item.detail = distanceText(origin, hit.x, hit.z) + ' · ' + fmtCoord(hit.x) + ', ' + fmtCoord(hit.z);
+                                    item.run = () => jumpTo(dim, hit.x, hit.z, {
+                                        title: b.name, color: b.color,
+                                        details: ['Nearest ' + b.name + ' found by the search (' + distanceText(origin, hit.x, hit.z) + ')']
+                                    });
+                                } else {
+                                    item.detail = 'Not found in the explored area';
+                                }
+                                renderSearchResults();
+                            });
+                        }
+                    }
+                }
+                if (!items.length) items.push({ note: 'Nothing found for "' + q.trim() + '".' });
+            }
+
+            if (token !== searchToken) return;
+            searchItems = items;
+            searchSelected = Math.max(0, items.findIndex(i => !i.note));
+            // Coming back from a result: keep it selected (Arrow down + Enter = the next one).
+            if (searchSelectAfter !== null && items[searchSelectAfter] && !items[searchSelectAfter].note) {
+                searchSelected = searchSelectAfter;
+            }
+            searchSelectAfter = null;
+            renderSearchResults();
+            const li = document.getElementById('search-result-' + searchSelected);
+            if (li) li.scrollIntoView({ block: 'nearest' });
+        }
+
+        function renderSearchOrigin(from) {
+            const text = document.createElement('span');
+            const where = fmtCoord(from.x) + ', ' + fmtCoord(from.z) + ' (' + DIMENSIONS[current].label + ')';
+            if (!searchFrom) {
+                text.textContent = 'From the map centre: ' + where;
+                searchOrigin.replaceChildren(text);
+                return;
+            }
+            text.textContent = 'From where you searched: ' + where + ' ';
+            const here = document.createElement('button');
+            here.type = 'button';
+            here.className = 'link';
+            here.textContent = 'Measure from here';
+            here.title = 'Measure distances from the current map centre instead';
+            here.addEventListener('click', () => {
+                searchFrom = null;
+                searchCrosshair.hidden = false;
+                updateSearch();
+                searchInput.focus();
+            });
+            searchOrigin.replaceChildren(text, here);
+        }
+
+        function renderSearchResults() {
+            searchResults.replaceChildren(...searchItems.map((item, i) => {
+                const li = document.createElement('li');
+                if (item.note) {
+                    li.className = 'note';
+                    li.textContent = item.note;
+                    return li;
+                }
+                li.id = 'search-result-' + i;
+                li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', String(i === searchSelected));
+                const icon = document.createElement('span');
+                if (item.icon.swatch) {
+                    icon.className = 'swatch';
+                    icon.style.setProperty('--biome-color', item.icon.swatch);
+                } else if (item.icon.color) {
+                    icon.className = 'type-icon';
+                    icon.style.setProperty('--type-color', item.icon.color);
+                    icon.textContent = item.icon.text;
+                } else {
+                    icon.className = 'result-icon';
+                    icon.textContent = item.icon.text;
+                }
+                const text = document.createElement('span');
+                text.className = 'text';
+                const title = document.createElement('div');
+                title.className = 'title';
+                title.textContent = item.title;
+                const detail = document.createElement('div');
+                detail.className = 'detail';
+                detail.textContent = item.detail;
+                if (item.dimTag) {
+                    const tag = document.createElement('span');
+                    tag.className = 'dim-tag';
+                    tag.textContent = item.dimTag + ' · ';
+                    detail.prepend(tag);
+                }
+                text.append(title, detail);
+                li.append(icon, text);
+                if (item.action) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'action';
+                    btn.textContent = item.action.label;
+                    btn.title = item.action.title;
+                    btn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        item.action.run();
+                    });
+                    li.append(btn);
+                }
+                li.addEventListener('mouseenter', () => selectSearchResult(i));
+                li.addEventListener('click', () => runSearchItem(item));
+                return li;
+            }));
+            const selected = searchItems[searchSelected];
+            if (selected && !selected.note) searchInput.setAttribute('aria-activedescendant', 'search-result-' + searchSelected);
+            else searchInput.removeAttribute('aria-activedescendant');
+        }
+
+        function selectSearchResult(i) {
+            if (!searchItems[i] || searchItems[i].note) return;
+            searchSelected = i;
+            searchResults.querySelectorAll('li[role="option"]').forEach(li =>
+                li.setAttribute('aria-selected', String(li.id === 'search-result-' + i)));
+            searchInput.setAttribute('aria-activedescendant', 'search-result-' + i);
+            const li = document.getElementById('search-result-' + i);
+            if (li) li.scrollIntoView({ block: 'nearest' });
+        }
+
+        // Closing to jump to a result keeps the session (search, starting point)
+        // so the results come back when the entry is closed; closing the
+        // search itself (Esc, button) ends it.
+        function setSearchPanel(open, { keepSession = false } = {}) {
+            searchPanel.hidden = !open;
+            searchToggle.setAttribute('aria-pressed', String(open));
+            if (open) {
+                if (searchReturn) {
+                    searchInput.value = searchReturn.query;
+                    searchSelectAfter = searchReturn.selected;
+                    searchReturn = null;
+                }
+                searchCrosshair.hidden = Boolean(searchFrom);
+                updateSearch();
+                searchInput.focus();
+                searchInput.select();
+            } else {
+                searchCrosshair.hidden = true;
+                searchToken++;
+                if (!keepSession) {
+                    searchReturn = null;
+                    searchFrom = null;
+                }
+            }
+        }
+
+        searchToggle.addEventListener('click', () => setSearchPanel(searchPanel.hidden));
+        searchInput.addEventListener('input', updateSearch);
+        searchInput.addEventListener('keydown', e => {
+            const options = searchItems.map((item, i) => (item.note ? -1 : i)).filter(i => i >= 0);
+            const at = options.indexOf(searchSelected);
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const next = options[(at + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length];
+                if (next !== undefined) selectSearchResult(next);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearchItem(searchItems[searchSelected]);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                setSearchPanel(false);
+            }
+            e.stopPropagation(); // typing must not trigger the map's shortcut keys
+        });
+
+        // ---- Slime chunks (Bedrock) ------------------------------------------
+        // Bedrock decides slime chunks from the chunk coordinates alone, not the
+        // seed: MT19937 seeded with (x * 0x1f1f1f1f) ^ z, slime chunk if the
+        // first output % 10 == 0. Checked against the slimes saved in a real
+        // world (35% inside, 92% inside or next to a predicted chunk; a wrong
+        // formula gives the random 10% / 61%).
+
+        const SLIME_KEY = 'map-renderer.slime-chunks';
+        const SLIME_MAX_BLOCKS_PER_PIXEL = 4;     // further out the pattern is noise
+        const SLIME_FILL = [110, 225, 80, 115];   // RGBA
+        const slimeToggle = document.getElementById('slime-toggle');
+        const mapHint = document.getElementById('map-hint');
+        const slimeRegions = new Map();           // "rx:rz" -> Uint8Array(1024), 1 = slime chunk
+        let slimeOn = false;
+        try { slimeOn = localStorage.getItem(SLIME_KEY) === '1'; } catch (e) { /* ignore */ }
+        let slimeLayer = null;                    // { layer, source, u } of the loaded map
+
+        function isSlimeChunk(cx, cz) {
+            // First output of std::mt19937; only state words 0, 1 and 397 are needed.
+            let s = (Math.imul(cx, 0x1f1f1f1f) ^ cz) >>> 0;
+            const s0 = s;
+            let s1 = 0;
+            for (let i = 1; i <= 397; i++) {
+                s = (Math.imul(1812433253, s ^ (s >>> 30)) + i) >>> 0;
+                if (i === 1) s1 = s;
+            }
+            let y = ((s0 & 0x80000000) | (s1 & 0x7fffffff)) >>> 0;
+            y = (s ^ (y >>> 1) ^ (y & 1 ? 0x9908b0df : 0)) >>> 0;
+            y ^= y >>> 11;
+            y = (y ^ ((y << 7) & 0x9d2c5680)) >>> 0;
+            y = (y ^ ((y << 15) & 0xefc60000)) >>> 0;
+            y ^= y >>> 18;
+            return (y >>> 0) % 10 === 0;
+        }
+
+        function slimeRegion(rx, rz) {
+            const key = rx + ':' + rz;
+            let bits = slimeRegions.get(key);
+            if (!bits) {
+                bits = new Uint8Array(1024);
+                for (let z = 0; z < 32; z++) {
+                    for (let x = 0; x < 32; x++) bits[z * 32 + x] = isSlimeChunk(rx * 32 + x, rz * 32 + z) ? 1 : 0;
+                }
+                slimeRegions.set(key, bits);
+            }
+            return bits;
+        }
+
+        const isBedrock = () => Boolean((biomeDoc && biomeDoc.edition === 'bedrock')
+            || (statsDoc && statsDoc.world && /bedrock/i.test(statsDoc.world.edition || '')));
+
+        function updateSlimeUi() {
+            slimeToggle.hidden = !isBedrock() || current !== 'overworld';
+            slimeToggle.setAttribute('aria-pressed', String(slimeOn));
+            updateMapHint();
+        }
+
+        // One notice line at the bottom: the slime zoom hint wins over the cave map label.
+        let caveHint = null;
+        function updateMapHint(cave) {
+            if (cave !== undefined) caveHint = cave;
+            const v = readView();
+            const far = v && 1 / v.ppb > SLIME_MAX_BLOCKS_PER_PIXEL;
+            const text = slimeOn && !slimeToggle.hidden && far ? 'Zoom in to see slime chunks' : caveHint;
+            mapHint.hidden = !text;
+            mapHint.textContent = text || '';
+        }
+
+        function setSlime(on) {
+            slimeOn = on;
+            try { localStorage.setItem(SLIME_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+            if (slimeLayer) slimeLayer.layer.setVisible(on);
+            if (on && !slimeLayer) attachSlime();
+            updateSlimeUi();
+        }
+
+        function attachSlime() {
+            slimeLayer = null;
+            if (current !== 'overworld' || !isBedrock()) return;
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!u || !u.olMap || !ol) return;
+            const doc = u.olMap.getTargetElement().ownerDocument;
+            const toBlock = c => ol.proj.transform(c, u.viewProjection, u.dataProjection);
+            const toView = b => ol.proj.transform(b, u.dataProjection, u.viewProjection);
+            const canvases = new Map();
+
+            function regionCanvas(rx, rz) {
+                const key = rx + ':' + rz;
+                if (!canvases.has(key)) {
+                    const bits = slimeRegion(rx, rz);
+                    const canvas = doc.createElement('canvas');
+                    canvas.width = canvas.height = 32;
+                    const g = canvas.getContext('2d');
+                    const img = g.createImageData(32, 32);
+                    bits.forEach((b, i) => { if (b) img.data.set(SLIME_FILL, i * 4); });
+                    g.putImageData(img, 0, 0);
+                    canvases.set(key, canvas);
+                }
+                return canvases.get(key);
+            }
+
+            const source = new ol.source.ImageCanvas({
+                interpolate: false,
+                ratio: 1.2,
+                canvasFunction: (extent, resolution, pixelRatio, imgSize) => {
+                    const canvas = doc.createElement('canvas');
+                    canvas.width = imgSize[0];
+                    canvas.height = imgSize[1];
+                    const a = toBlock([extent[0], extent[1]]);
+                    const b = toBlock([extent[2], extent[3]]);
+                    const blocksPerPixel = Math.abs(b[0] - a[0]) / (imgSize[0] / pixelRatio);
+                    if (blocksPerPixel > SLIME_MAX_BLOCKS_PER_PIXEL) return canvas;
+                    const g = canvas.getContext('2d');
+                    g.imageSmoothingEnabled = false;
+                    const sx = imgSize[0] / (extent[2] - extent[0]);
+                    const sy = imgSize[1] / (extent[3] - extent[1]);
+                    const px = (bx, bz) => {
+                        const p = toView([bx, bz]);
+                        return [(p[0] - extent[0]) * sx, (extent[3] - p[1]) * sy];
+                    };
+                    const x0 = Math.floor(Math.min(a[0], b[0]) / 512), x1 = Math.floor(Math.max(a[0], b[0]) / 512);
+                    const z0 = Math.floor(Math.min(a[1], b[1]) / 512), z1 = Math.floor(Math.max(a[1], b[1]) / 512);
+                    for (let rx = x0; rx <= x1; rx++) {
+                        for (let rz = z0; rz <= z1; rz++) {
+                            const [l, t] = px(rx * 512, rz * 512);
+                            const [r, btm] = px((rx + 1) * 512, (rz + 1) * 512);
+                            g.setTransform((r - l) / 32, 0, 0, (btm - t) / 32, l, t);
+                            g.drawImage(regionCanvas(rx, rz), 0, 0);
+                        }
+                    }
+                    g.setTransform(1, 0, 0, 1, 0, 0);
+                    // Close up: outline each slime chunk too.
+                    if (blocksPerPixel <= 1) {
+                        g.strokeStyle = 'rgba(160, 255, 120, 0.9)';
+                        g.lineWidth = Math.max(1, pixelRatio);
+                        const cx0 = Math.floor(Math.min(a[0], b[0]) / 16), cx1 = Math.floor(Math.max(a[0], b[0]) / 16);
+                        const cz0 = Math.floor(Math.min(a[1], b[1]) / 16), cz1 = Math.floor(Math.max(a[1], b[1]) / 16);
+                        g.beginPath();
+                        for (let cx = cx0; cx <= cx1; cx++) {
+                            for (let cz = cz0; cz <= cz1; cz++) {
+                                const rx = Math.floor(cx / 32), rz = Math.floor(cz / 32);
+                                if (!slimeRegion(rx, rz)[(cz - rz * 32) * 32 + (cx - rx * 32)]) continue;
+                                const [l, t] = px(cx * 16, cz * 16);
+                                const [r, btm] = px((cx + 1) * 16, (cz + 1) * 16);
+                                g.rect(Math.min(l, r) + 0.5, Math.min(t, btm) + 0.5, Math.abs(r - l) - 1, Math.abs(btm - t) - 1);
+                            }
+                        }
+                        g.stroke();
+                    }
+                    return canvas;
+                }
+            });
+            const layer = new ol.layer.Image({ source, zIndex: 1100, visible: slimeOn });
+            u.olMap.addLayer(layer);
+            slimeLayer = { layer, source, u };
+        }
+
+        slimeToggle.addEventListener('click', () => setSlime(!slimeOn));
+
+        // ---- Waypoints (markers/markers.json) --------------------------------
+        // Own places (bases, farms, shops) kept in markers.json, outside the map:
+        // markers/markers.json (a folder mounted from the host, MARKERS_DIR), or
+        // map/markers.json as a fallback.
+        //   { "markers": [ { "name": "Main base", "dim": "overworld", "x": 120, "y": 64,
+        //                    "z": -340, "icon": "🏠", "color": "#e67e22", "description": "..." } ] }
+        // Only name, x and z are required. Edit the file; the page reads it on load.
+
+        const WAYPOINT_TYPE = 'waypoint'; // key in the structure legend / hiddenTypes
+        let waypoints = [];
+        let waypointCtx = null; // { u, layer } of the loaded map
+
+        const fetchJson = url => fetch(url, { cache: 'no-cache' })
+            .then(r => (r.ok ? r.json() : null))
+            .catch(() => null);
+
+        const waypointsLoaded = fetchJson('markers/markers.json')
+            .then(doc => doc || fetchJson('map/markers.json'))
+            .then(doc => {
+                const list = Array.isArray(doc) ? doc : (doc && Array.isArray(doc.markers) ? doc.markers : []);
+                waypoints = list
+                    .filter(w => w && typeof w.name === 'string' && isFinite(w.x) && isFinite(w.z))
+                    .map((w, i) => ({
+                        id: 'wp:' + i,
+                        name: w.name,
+                        dim: DIMENSIONS[w.dim] ? w.dim : 'overworld',
+                        x: Math.round(Number(w.x)),
+                        y: isFinite(w.y) && w.y !== null && w.y !== '' ? Math.round(Number(w.y)) : undefined,
+                        z: Math.round(Number(w.z)),
+                        icon: typeof w.icon === 'string' && w.icon ? w.icon : '📍',
+                        color: /^#[0-9a-f]{3,8}$/i.test(w.color || '') ? w.color : '#e74c3c',
+                        description: typeof w.description === 'string' ? w.description : ''
+                    }));
+            });
+
+        const waypointsIn = dim => waypoints.filter(w => w.dim === dim);
+
+        // Rounded square in the waypoint's colour with its emoji, drawn once per look.
+        function waypointImage(doc, w, selected) {
+            const ratio = Math.min(3, Math.max(1, Math.ceil(window.devicePixelRatio || 1)));
+            const size = selected ? 30 : 26;
+            const canvas = doc.createElement('canvas');
+            canvas.width = canvas.height = size * ratio;
+            const g = canvas.getContext('2d');
+            g.scale(ratio, ratio);
+            const r = 6, p = 2;
+            g.beginPath();
+            g.roundRect(p, p, size - 2 * p, size - 2 * p, r);
+            g.fillStyle = w.color;
+            g.fill();
+            g.lineWidth = selected ? 3 : 2;
+            g.strokeStyle = selected ? '#fff' : 'rgba(0, 0, 0, 0.55)';
+            g.stroke();
+            g.font = (selected ? 16 : 14) + 'px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+            g.textAlign = 'center';
+            g.textBaseline = 'middle';
+            g.fillText(w.icon, size / 2, size / 2 + 1);
+            return { canvas, ratio };
+        }
+
+        function attachWaypoints() {
+            waypointCtx = null;
+            const list = waypointsIn(current);
+            const u = getUnmined();
+            const ol = frame.contentWindow && frame.contentWindow.ol;
+            if (!list.length || !u || !u.olMap || !ol) return;
+            const doc = u.olMap.getTargetElement().ownerDocument;
+            const unit = blockUnit(u, ol);
+            const images = new Map();
+            const icon = (w, selected) => {
+                const key = w.id + (selected ? ':sel' : '');
+                if (!images.has(key)) {
+                    const { canvas, ratio } = waypointImage(doc, w, selected);
+                    images.set(key, new ol.style.Style({
+                        image: new ol.style.Icon({ img: canvas, scale: 1 / ratio }),
+                        zIndex: selected ? 5 : 4
+                    }));
+                }
+                return images.get(key);
+            };
+            const labels = new Map();
+            const label = w => {
+                if (!labels.has(w.id)) {
+                    labels.set(w.id, new ol.style.Style({
+                        text: new ol.style.Text({
+                            text: w.name,
+                            font: '700 12px -apple-system, "Segoe UI", Roboto, sans-serif',
+                            fill: new ol.style.Fill({ color: '#fff' }),
+                            stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.9)', width: 3 }),
+                            offsetY: 22
+                        }),
+                        zIndex: 6
+                    }));
+                }
+                return labels.get(w.id);
+            };
+            const source = new ol.source.Vector({
+                features: list.map(w => {
+                    const f = new ol.Feature(new ol.geom.Point(
+                        ol.proj.transform([w.x + 0.5, w.z + 0.5], u.dataProjection, u.viewProjection)));
+                    f.set('waypoint', w);
+                    return f;
+                })
+            });
+            const layer = new ol.layer.Vector({
+                source,
+                zIndex: 1550,
+                visible: !hiddenTypes.has(WAYPOINT_TYPE),
+                style: (f, resolution) => {
+                    const w = f.get('waypoint');
+                    const selected = w.id === selectedId;
+                    // Names from a medium zoom on (they are the point of waypoints).
+                    return unit / resolution >= 1 / 8 || selected ? [icon(w, selected), label(w)] : icon(w, selected);
+                }
+            });
+            u.olMap.addLayer(layer);
+            waypointCtx = { u, layer };
+        }
+
+        function waypointAt(pixel) {
+            if (!waypointCtx || !waypointCtx.layer.getVisible() || waypointCtx.u !== getUnmined()) return null;
+            return waypointCtx.u.olMap.forEachFeatureAtPixel(pixel, f => f.get('waypoint'),
+                { layerFilter: l => l === waypointCtx.layer, hitTolerance: 4 }) || null;
+        }
+
+        function showWaypoint(w) {
+            showPlaceInfo({
+                title: w.name, icon: w.icon, color: w.color, x: w.x, y: w.y, z: w.z,
+                details: [w.description, 'Waypoint'].filter(Boolean), waypoint: false
+            });
+            selectedId = w.id;
+            if (waypointCtx) waypointCtx.layer.changed();
+        }
+
+        function goToWaypoint(w) {
+            setSearchPanel(false, { keepSession: true });
+            if (w.dim === current) {
+                const u = getUnmined();
+                if (u) u.center([w.x, w.z]);
+                showWaypoint(w);
+            } else {
+                pendingWaypoint = w;
+                select(w.dim, { view: { x: w.x, z: w.z } });
+            }
+        }
+        let pendingWaypoint = null;
+
+        // markers.json entry for a place, to paste into the file.
+        function copyWaypoint(place, dim) {
+            const entry = { name: place.title || 'New place', dim, x: Math.round(place.x) };
+            if (place.y !== undefined) entry.y = Math.round(place.y);
+            entry.z = Math.round(place.z);
+            entry.icon = '📍';
+            const text = '    ' + JSON.stringify(entry).replace(/,"/g, ', "').replace(/":/g, '": ') + ',';
+            if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
         }
 
         // ---- Statistics ----------------------------------------------
@@ -2049,7 +3108,7 @@
         }));
 
         structuresToggle.addEventListener('click', () => setStructuresPanel(structuresPanel.hidden));
-        document.getElementById('info-close').addEventListener('click', hideInfo);
+        document.getElementById('info-close').addEventListener('click', closeInfo);
 
         frame.addEventListener('load', () => {
             upgradeZoom();
@@ -2065,13 +3124,42 @@
             const loadedMap = getUnmined();
             const loadedOl = frame.contentWindow && frame.contentWindow.ol;
             if (loadedMap && loadedMap.olMap) {
-                loadedMap.olMap.on('moveend', () => rememberView(loadedDim, readView(loadedMap, loadedOl)));
+                loadedMap.olMap.on('moveend', () => {
+                    rememberView(loadedDim, readView(loadedMap, loadedOl));
+                    // "From here" moved (unless measuring from where the search started).
+                    if (!searchPanel.hidden && !searchFrom && loadedDim === current) updateSearch();
+                    if (loadedDim === current) updateSlimeUi();
+                });
+            }
+            if (pendingPin) {
+                showPin(pendingPin.x, pendingPin.z);
+                if (pendingPin.place) showPlaceInfo({ ...pendingPin.place, x: pendingPin.x, z: pendingPin.z });
+                pendingPin = null;
             }
 
             measureAttach();
             renderMeasure(null);
             attachBiomeHover();
             const loadedWindow = frame.contentWindow;
+            waypointCtx = null;
+            waypointsLoaded.then(() => {
+                if (frame.contentWindow !== loadedWindow) return;
+                attachWaypoints();
+                if (!structuresPanel.hidden) renderLegend();
+                if (pendingWaypoint) {
+                    showWaypoint(pendingWaypoint);
+                    pendingWaypoint = null;
+                }
+            });
+            slimeLayer = null;
+            Promise.all([biomesLoaded, statsLoaded]).then(() => {
+                if (frame.contentWindow !== loadedWindow) return;
+                if (slimeOn) attachSlime();
+                updateSlimeUi();
+            });
+            cavesLoaded.then(() => {
+                if (frame.contentWindow === loadedWindow) updateCaveUi();
+            });
             biomesLoaded.then(() => {
                 if (frame.contentWindow === loadedWindow) attachBiomeMask();
             });
@@ -2103,8 +3191,17 @@
                 setStatsPanel(statsPanel.hidden);
             } else if (e.key === 'b' || e.key === 'B') {
                 toggleBiomes();
+            } else if ((e.key === 'k' || e.key === 'K') && !slimeToggle.hidden) {
+                setSlime(!slimeOn);
+            } else if ((e.key === 'c' || e.key === 'C') && !cavesToggle.hidden) {
+                setCaveMode(!caveMode);
+            } else if (e.key === 'f' || e.key === 'F' || e.key === '/') {
+                e.preventDefault(); // don't type the key into the search box
+                setSearchPanel(true);
+            } else if (e.key === 'Escape' && !searchPanel.hidden) {
+                setSearchPanel(false);
             } else if (e.key === 'Escape' && !infoPanel.hidden) {
-                hideInfo();
+                closeInfo();
             } else if (e.key === 'Escape' && measureActive) {
                 if (measureDrawing && measureCtx) measureCtx.draw.abortDrawing();
                 else setMeasure(false);
@@ -2120,8 +3217,8 @@
 
         // With the biome map switched on, wait for biomes.json so the right
         // export is loaded first (instead of loading the normal map twice).
-        if (biomeMode) {
-            biomesLoaded.then(() => select(location.hash.slice(1) || DEFAULT_DIM));
+        if (biomeMode || caveMode) {
+            Promise.all([biomesLoaded, cavesLoaded]).then(() => select(location.hash.slice(1) || DEFAULT_DIM));
         } else {
             select(location.hash.slice(1) || DEFAULT_DIM);
         }

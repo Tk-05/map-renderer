@@ -29,6 +29,8 @@ services:
     volumes:
       # MAP_DIR: a host folder (absolute path), otherwise the "map" volume.
       - ${MAP_DIR:-map}:/usr/share/nginx/html/map:ro
+      # MARKERS_DIR: host folder with markers.json (waypoints), otherwise the "markers" volume.
+      - ${MARKERS_DIR:-markers}:/usr/share/nginx/html/markers:ro
 
   renderer:
     image: ${MAP_RENDERER_RENDERER_IMAGE:-ghcr.io/tk-05/map-renderer-renderer:latest}
@@ -46,4 +48,5 @@ services:
 
 volumes:
   map:     # used when MAP_DIR is not set
+  markers: # used when MARKERS_DIR is not set (empty: no waypoints)
   cache:   # uNmINeD, Microsoft sign-in tokens, downloaded world, logs

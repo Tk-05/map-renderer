@@ -13,3 +13,6 @@ map/*
 
 # Local Docker Compose settings (copy of .env.example)
 .env
+
+# Own waypoints (markers/markers.json) belong to the server, not the repository.
+markers/

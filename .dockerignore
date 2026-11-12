@@ -11,3 +11,4 @@ server/docker-compose.yml
 .env.example
 docker-compose.yml
 docker-compose.build.yml
+markers

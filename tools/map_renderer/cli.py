@@ -23,6 +23,7 @@ import sys
 import time
 import zlib
 from collections import Counter
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -37,6 +38,11 @@ DIM_LABELS = {"overworld": "Overworld", "nether": "Nether", "end": "The End"}
 # The Nether is rendered from this height down: from above, uNmINeD would
 # only show the bedrock roof (y 123-127), i.e. a grey map.
 NETHER_TOP_Y = 100
+
+# Cave map of the Overworld: everything above this height is left out, so the
+# map shows a cut through the underground. -45 shows ancient cities (y about
+# -51) and the deep dark; at -30 they are mostly still hidden in the rock.
+CAVE_TOP_Y = -45
 
 
 class CliError(Exception):
@@ -71,6 +77,10 @@ class Project:
     @property
     def biomes_file(self) -> Path:
         return self.map_dir / "biomes.json"
+
+    @property
+    def caves_file(self) -> Path:
+        return self.map_dir / "caves.json"
 
     def render_log(self, dim: str) -> Path:
         return self.cache_dir / "logs" / f"render-{dim}.log"
@@ -126,6 +136,8 @@ class Plan:
     force: bool = False
     biomes: bool = False       # also render biome maps (overworld, nether)
     nether_top: int = NETHER_TOP_Y  # Nether rendered below this y (its roof is bedrock); 0 = off
+    caves: bool = False             # also render a cave map of the Overworld
+    cave_top: int = CAVE_TOP_Y      # ... showing everything at and below this y
     extras: bool = False
     zoomin: int = 0
     zoomout: int = 6
@@ -169,6 +181,10 @@ class Plan:
                 parts.append("--force")
             if self.biomes:
                 parts.append("--biomes")
+            if self.caves:
+                parts.append("--caves")
+                if self.cave_top != CAVE_TOP_Y:
+                    parts += ["--cave-top", str(self.cave_top)]
             if self.nether_top != NETHER_TOP_Y and "nether" in self.dims:
                 parts += ["--nether-top", str(self.nether_top)]
             if self.zoomin != 0:
@@ -290,6 +306,16 @@ def build_plan(args: argparse.Namespace, project: Project, mode: str, interactiv
                 "Also render biome maps? (Overworld and Nether; about doubles render time and disk space)",
                 bool(state.get("biomes", False)))
 
+        if args.caves is not None:
+            plan.caves = args.caves and "overworld" in dims
+        elif interactive and "overworld" in dims:
+            plan.caves = prompts.confirm(
+                f"Also render a cave map of the Overworld? (y = {CAVE_TOP_Y} and below: caves, "
+                "ancient cities, deep dark; about doubles the Overworld's render time and disk space)",
+                bool(state.get("caves", False)))
+        if args.cave_top is not None:
+            plan.cave_top = args.cave_top
+
         if args.nether_top is not None:
             plan.nether_top = max(0, args.nether_top)
 
@@ -322,6 +348,8 @@ def _summary(plan: Plan, project: Project) -> None:
         steps.append("render" + (" (everything)" if plan.force else " (changed regions)"))
         if plan.biomes:
             steps.append("biome maps")
+        if plan.caves:
+            steps.append(f"cave map (y = {plan.cave_top})")
     if plan.scan:
         steps.append("scan structures" + (" incl. common finds" if plan.extras else ""))
     if plan.realm:
@@ -345,6 +373,18 @@ def _summary(plan: Plan, project: Project) -> None:
 def _duration(seconds: float) -> str:
     seconds = round(seconds)
     return f"{seconds // 60}m {seconds % 60:02d}s" if seconds >= 60 else f"{seconds}s"
+
+
+def write_caves_info(path: Path, dim: str, top_y: int) -> None:
+    """map/caves.json tells the web page which cave maps exist and from which height."""
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        doc = {}
+    doc.setdefault("dimensions", {})[dim] = {"topY": top_y}
+    doc["generated"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
 
 
 def run_plan(plan: Plan, project: Project) -> None:
@@ -385,6 +425,17 @@ def run_plan(plan: Plan, project: Project) -> None:
                                zoomout=plan.zoomout, zoomin=plan.zoomin, force=plan.force,
                                extra=plan.render_args(dim_id), log_file=log_file)
                 prompts.success(f"{DIM_LABELS[dim_id]} biome map rendered in {_duration(time.monotonic() - t)}")
+
+            if plan.caves and dim_id == "overworld":
+                prompts.heading(f"Rendering Overworld cave map (y = {plan.cave_top} and below)")
+                t = time.monotonic()
+                log_file = project.render_log("overworld-caves")
+                own = [a for a in plan.extra if not a.lower().startswith("--topy")]
+                unmined.render(cli, plan.world.path, dim_id, project.map_dir / "overworld-caves",
+                               zoomout=plan.zoomout, zoomin=plan.zoomin, force=plan.force,
+                               extra=[f"--topY={plan.cave_top}", *own], log_file=log_file)
+                write_caves_info(project.caves_file, "overworld", plan.cave_top)
+                prompts.success(f"Cave map rendered in {_duration(time.monotonic() - t)}")
 
         if biome_dims:
             edition = biomes.edition_of(plan.world.edition)
@@ -458,10 +509,12 @@ def cmd_build(args: argparse.Namespace, mode: str) -> int:
 
     source = {"realm": plan.realm.id} if plan.realm else {"world": str(plan.world.path)}
     state = {**source, "dims": plan.dims}
-    if plan.render:
-        state["biomes"] = plan.biomes
-    elif "biomes" in project.load_state():
-        state["biomes"] = project.load_state()["biomes"]
+    previous = project.load_state()
+    for key, value in (("biomes", plan.biomes), ("caves", plan.caves)):
+        if plan.render:
+            state[key] = value
+        elif key in previous:
+            state[key] = previous[key]
     project.save_state(state)
     run_plan(plan, project)
     return 0
@@ -545,6 +598,10 @@ def make_parser() -> argparse.ArgumentParser:
     group.add_argument("--zoomout", type=int, help="zoom-out levels (default: 6)")
     group.add_argument("--biomes", action=argparse.BooleanOptionalAction, default=None,
                        help="also render biome maps of the Overworld and Nether (about 2x time and disk)")
+    group.add_argument("--caves", action=argparse.BooleanOptionalAction, default=None,
+                       help=f"also render a cave map of the Overworld (y = {CAVE_TOP_Y} and below)")
+    group.add_argument("--cave-top", type=int, metavar="Y",
+                       help=f"height the cave map starts at (default: {CAVE_TOP_Y})")
     group.add_argument("--nether-top", type=int, metavar="Y",
                        help=f"render the Nether from this height down, below its bedrock roof "
                             f"(default: {NETHER_TOP_Y}; 0 = from the top, shows only the roof)")
@@ -593,7 +650,8 @@ def main(argv: list[str] | None = None) -> int:
     # Fill in options a subcommand doesn't define (e.g. scan has no --force).
     for name, default in (("world", None), ("output", None), ("realm", None), ("slot", None), ("dims", None), ("yes", False),
                           ("ignore_running", False), ("force", None), ("zoomin", None), ("zoomout", None),
-                          ("extras", None), ("biomes", None), ("nether_top", None)):
+                          ("extras", None), ("biomes", None), ("nether_top", None),
+                          ("caves", None), ("cave_top", None)):
         if not hasattr(args, name):
             setattr(args, name, default)
     args.extra = extra

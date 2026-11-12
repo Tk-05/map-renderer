@@ -145,6 +145,20 @@ the ones you are looking for; a group checkbox switches a whole group such as al
 oceans). Hidden biomes are dimmed on the map, so the selected ones stand out, at any
 zoom level. The selection is remembered in the browser.
 
+**Cave map.** Answer "Also render a cave map?" with yes, or pass `--caves`:
+
+```bash
+map-renderer build --world "SMP" --caves -y
+```
+
+This renders the Overworld a second time with everything above y = −45 left out, into
+`map/overworld-caves/`: a cut through the underground that shows caves, ancient cities
+(around y = −51) and the deep dark. Choose another height with `--cave-top Y`. On the
+web page, the cave button (or key `C`) switches to it at the same position; the biome
+map and the cave map are alternatives, so switching one on switches the other off.
+It roughly doubles the Overworld's render time and disk space. Chunks last saved before
+Minecraft 1.18 have no blocks below y = 0 and stay black.
+
 ---
 
 ## Tutorial 2: Download a Realm world
@@ -427,6 +441,9 @@ docker compose run --rm renderer map-renderer build --realm "My Realm" --force -
 # Also render biome maps
 #   in .env:  BUILD_ARGS=--biomes
 
+# Also render the cave map (or both: BUILD_ARGS=--biomes --caves)
+#   in .env:  BUILD_ARGS=--caves
+
 # Sign out / switch account
 docker compose run --rm renderer map-renderer realm logout
 
@@ -452,11 +469,72 @@ map.example.com {
 | Key             | Action                                                                                    |
 | --------------- | ----------------------------------------------------------------------------------------- |
 | `1` / `2` / `3` | Overworld / Nether / End                                                                  |
+| `F` or `/`      | Search: coordinates, structures, biomes, waypoints (see below)                            |
+| `K`             | Slime chunks (Bedrock, Overworld; zoom in to see them)                                    |
+| `C`             | Cave map of the Overworld (only shown if rendered with `--caves`)                         |
 | `S`             | Toggle the structure list (portals, villages, strongholds, ancient cities, end cities, …) |
 | `I`             | Statistics (world size, chunks, regions, last render)                                     |
 | `B`             | Biome map with legend (only shown if rendered with `--biomes`); press again to switch off. Hover or tap shows the biome (Bedrock) |
 | `M`             | Measure distance. `Backspace` removes the last point, `Esc` cancels.                      |
 | `Esc`           | Close the info panel                                                                      |
+
+**Search** (magnifier button, `F` or `/`) measures from the map centre, marked with a
+crosshair while the search is open:
+
+- **Coordinates**: `120 -340`, `120 64 -340` or a pasted `/tp @s 120 64 -340` jumps
+  there and drops a pin. You also get the same spot in the linked dimension
+  (Overworld ÷ 8 = Nether).
+- **Structures**: e.g. `village`, `stronghold`, `fortress` lists the nearest ones with
+  distance and direction; also from the other dimension (a Nether fortress from the
+  Overworld, measured from the matching Nether position).
+- **Biomes** (Bedrock): e.g. `mushroom` finds the nearest occurrence. **Highlight**
+  switches to the biome map with only that biome visible.
+- Empty: the nearest village, stronghold, ancient city, trial chamber and so on.
+
+Arrow keys choose a result, `Enter` jumps, `Esc` closes.
+
+After a jump, the result's info panel opens. Closing it (**Close**, `Esc` or a click on
+the map) brings the search back with the same results, the visited one selected, so
+`↓` + `Enter` goes to the next one. Distances stay measured from where you searched;
+**Measure from here** switches to the current map centre. `Esc` in the search box ends
+the search.
+
+**Slime chunks** (slime button, `K`): in Bedrock, slime chunks depend only on the chunk
+coordinates, not on the seed, so the map can show them exactly without revealing the
+seed. Shown in green (outlined when zoomed in) on the Overworld of Bedrock worlds.
+
+### Waypoints
+
+Your own places (bases, farms, shops, …) go into a `markers.json` that is kept outside
+the image and the map, in its own folder:
+
+- **Server:** set `MARKERS_DIR` (in `.env` or the Portainer stack) to a host folder,
+  e.g. `MARKERS_DIR=/srv/map-markers`, and put `markers.json` there. It is mounted
+  read-only at `/markers/`. A folder is mounted rather than the single file, so edits
+  show up even when an editor replaces the file while saving.
+- **Locally:** `markers/markers.json` next to `index.html` (git-ignored).
+- Fallback for older setups: `map/markers.json`.
+
+The page reads the file on every load (no caching), so editing it is enough:
+
+```json
+{
+  "markers": [
+    { "name": "Main base", "dim": "overworld", "x": 120, "y": 64, "z": -340,
+      "icon": "🏠", "color": "#e67e22", "description": "Storage and beds" },
+    { "name": "Iron farm", "x": 260, "z": -180, "icon": "⚙️", "color": "#7f8c8d" },
+    { "name": "Nether hub", "dim": "nether", "x": 10, "y": 70, "z": -20, "icon": "🧭" }
+  ]
+}
+```
+
+Only `name`, `x` and `z` are required. `dim` defaults to `overworld`, `icon` to 📍 and
+`color` to red. Waypoints are drawn above the structures with their name, can be
+switched off in the structure list (**Waypoints**), and are found by the search (by name
+or description; with an empty search they come first).
+
+To create an entry, open a place (a structure, or coordinates from the search) and
+click **Copy waypoint**: a ready line for `markers.json` is copied to the clipboard.
 
 Clicking a structure shows its coordinates. **Copy /tp** copies the matching teleport
 command. Switching between the Overworld and the Nether keeps your position
@@ -494,6 +572,8 @@ On Windows the command is `map-renderer.bat …`, on Linux/macOS `./map-renderer
 | `--ignore-running`         | render even while Minecraft is running                                                          |
 | `--force`                  | re-render everything instead of only what changed (`build`/`render` only)                       |
 | `--biomes`                 | also render biome maps of the Overworld and Nether (`build`/`render` only)                      |
+| `--caves`                  | also render a cave map of the Overworld (`build`/`render` only)                                 |
+| `--cave-top Y`             | height the cave map starts at (default −45)                                                     |
 | `--nether-top Y`           | render the Nether from height Y down, below its bedrock roof (default 100; `0` = from the top)  |
 | `--zoomin N`               | zoom-in levels with real tiles, 0–3 (each level needs about 4× the disk space)                  |
 | `--zoomout N`              | zoom-out levels (default 6)                                                                     |
@@ -520,6 +600,7 @@ root for the all-in-one file, `server/.env` for `server/docker-compose.yml`)
 | Variable                      | Default                                      | Meaning                                                    |
 | ----------------------------- | -------------------------------------------- | ---------------------------------------------------------- |
 | `MAP_DIR`                     | volume `map`                                 | host folder with the map (absolute, or starting with `./`) |
+| `MARKERS_DIR`                 | volume `markers`                             | host folder with `markers.json` (own waypoints)            |
 | `PORT`                        | `8080`                                       | port of the web map (all-in-one file only)                 |
 | `COMPOSE_PROFILES`            | –                                            | `realm` also starts the renderer (`server/` file only)     |
 | `REALM`                       | –                                            | Realm name or id                                           |
